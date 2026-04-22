@@ -11,22 +11,27 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --bg:#F2F4F7;--surface:#FFFFFF;--border:#DDE2EC;--border-strong:#B8C0CE;
-  --text:#0B0F1A;--t2:#4A5568;--t3:#9AA3B2;
+  --bg:#EEF1F5;
+  --surface:#FFF;
+  --border:#DDE2EC;
+  --border-strong:#B8C0CE;
+  --text:#0B0F1A;
+  --t2:#4A5568;
+  --t3:#9AA3B2;
   --red:#D92B2B;--red-bg:#FFF1F1;--red-lt:#FECACA;
-  --green:#15803D;--green-bg:#F0FDF6;--green-lt:#BBF7D0;
-  --amber:#C47E00;--amber-bg:#FFFAEB;--amber-lt:#FDE68A;
+  --green:#15803D;--green-bg:#F0FDF6;--green-lt:#BBF7D0;--green-dk:#0D5C2E;
+  --amber:#B45309;--amber-bg:#FFFAEB;--amber-lt:#FDE68A;
   --blue:#1D4ED8;--blue-bg:#EFF6FF;
-  --purple:#7C3AED;
+  --big:#1E40AF;--big-bg:#EFF6FF;--big-lt:#BFDBFE;
+  --small:#5B21B6;--small-bg:#F5F3FF;--small-lt:#C4B5FD;
   --s1:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --s2:0 4px 14px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
   --r:12px;--rs:8px
 }
 html{font-size:16px}
 body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
 
-/* APP BAR */
-.app-bar{background:var(--surface);border-bottom:1.5px solid var(--border);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--s1)}
+/* ─── APP BAR ─────────────────── */
+.app-bar{background:var(--surface);border-bottom:1.5px solid var(--border);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .bar-logo{background:var(--amber);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;padding:4px 10px;border-radius:6px;flex-shrink:0}
 .bar-title{font-weight:700;font-size:16px;flex:1}
 .bar-clock{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--t2);flex-shrink:0}
@@ -35,10 +40,10 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .refresh-btn.spin{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* BANNER */
+/* ─── BANNER ──────────────────── */
 .banner{padding:8px 14px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px;min-height:36px;border-bottom:1px solid transparent}
 .banner .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.b-ok{background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
+.b-ok {background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
 .b-ok .dot{background:var(--green)}
 .b-err{background:var(--red-bg);color:#991B1B;border-color:var(--red-lt)}
 .b-err .dot{background:var(--red)}
@@ -46,116 +51,263 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .b-load .dot{background:var(--amber);animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* STATS */
-.stats-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;display:flex;gap:14px;font-size:12.5px;font-weight:600;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+/* ─── VEHICLE PANEL ───────────── */
+.veh-panel{background:var(--surface);border-bottom:2px solid var(--border)}
+.veh-toggle{
+  width:100%;padding:10px 14px;
+  display:flex;align-items:center;gap:10px;
+  background:none;border:none;font-family:inherit;
+  cursor:pointer;text-align:left
+}
+.veh-toggle-title{font-size:13px;font-weight:700;color:var(--t2);flex:1}
+.veh-toggle-summary{font-size:12px;color:var(--t3)}
+.veh-toggle-chevron{color:var(--t3);font-size:18px;transition:transform .2s}
+.veh-panel.open .veh-toggle-chevron{transform:rotate(180deg)}
+.veh-body{display:none;padding:0 12px 12px;gap:10px;display:none}
+.veh-panel.open .veh-body{display:flex;flex-direction:column;gap:10px}
+
+.veh-card{border-radius:var(--r);padding:13px 14px;border:2px solid}
+.veh-card.big  {background:var(--big-bg);border-color:var(--big-lt)}
+.veh-card.small{background:var(--small-bg);border-color:var(--small-lt)}
+
+.veh-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.veh-icon{font-size:22px}
+.veh-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;flex:1}
+.veh-card.big  .veh-name{color:var(--big)}
+.veh-card.small .veh-name{color:var(--small)}
+.veh-cases{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;
+  padding:4px 12px;border-radius:8px;
+}
+.veh-card.big   .veh-cases{background:var(--big);color:#fff}
+.veh-card.small .veh-cases{background:var(--small);color:#fff}
+.veh-cases-label{font-size:10px;font-weight:700;display:block;text-align:center;letter-spacing:.5px;opacity:.8;margin-top:1px}
+
+.veh-bills{display:flex;flex-wrap:wrap;gap:6px}
+.veh-bill-chip{
+  padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;
+  border:1.5px solid;display:flex;align-items:center;gap:5px
+}
+.veh-card.big   .veh-bill-chip{background:#DBEAFE;border-color:var(--big-lt);color:var(--big)}
+.veh-card.small .veh-bill-chip{background:#EDE9FE;border-color:var(--small-lt);color:var(--small)}
+.veh-empty{font-size:12.5px;color:var(--t3);font-style:italic;padding:4px 0}
+
+.veh-clear-btn{
+  margin-top:10px;padding:9px 14px;width:100%;
+  background:none;border:1.5px solid var(--border);
+  color:var(--t2);font-size:12.5px;font-weight:600;font-family:inherit;
+  border-radius:var(--rs);cursor:pointer;text-align:center
+}
+.veh-clear-btn:active{background:var(--bg)}
+
+/* ─── STATS ───────────────────── */
+.stats-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;display:flex;gap:14px;font-size:12.5px;font-weight:600;overflow-x:auto;scrollbar-width:none}
 .stats-bar::-webkit-scrollbar{display:none}
 .si{display:flex;align-items:center;gap:5px;white-space:nowrap}
-.si.red{color:var(--red)}.si.green{color:var(--green)}.si.gray{color:var(--t2)}
+.si.red{color:var(--red)}.si.grn{color:var(--green)}.si.gray{color:var(--t2)}.si.big{color:var(--big)}.si.sml{color:var(--small)}
 
-/* CHIPS */
-.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+/* ─── CHIPS ───────────────────── */
+.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
 .chips-row::-webkit-scrollbar{display:none}
-.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 12px;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px;transition:all .15s}
-.chip:active{transform:scale(.95)}
+.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 12px;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.chip:active{opacity:.7}
 .chip.active{background:var(--text);color:#fff;border-color:var(--text)}
 .cbadge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:flex;align-items:center;justify-content:center}
-.chip.active .cbadge{background:rgba(255,255,255,.25)}
+.chip.active .cbadge{background:rgba(255,255,255,.3)}
 .cbadge.zero{background:var(--border-strong);color:var(--t3)}
 
-/* SEARCH */
+/* ─── SEARCH ──────────────────── */
 .search-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;position:relative}
 .search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
-.search-input{width:100%;padding:11px 14px 11px 38px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;color:var(--text);transition:border-color .15s}
+.search-input{width:100%;padding:11px 14px 11px 38px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;color:var(--text)}
 .search-input:focus{border-color:var(--blue);background:#fff}
 .search-input::placeholder{color:var(--t3)}
 
-/* LIST */
+/* ─── LIST ────────────────────── */
 .list{padding:12px 11px 90px}
 .sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:6px 3px 8px;display:flex;align-items:center;gap:8px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .sec-label.lred{color:var(--red)}
 .sec-label.lgreen{color:var(--green)}
 
-/* CARD */
+/* ─── PENDING CARD ────────────── */
 .card{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
 .card.urgent{border-left:4px solid var(--red);background:var(--red-bg)}
-.card.done{background:var(--green-bg);border-color:var(--green-lt)}
-.card.saving{border-color:var(--purple);opacity:.8}
 
-.card-head{padding:13px 13px 12px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
+.card-head{padding:14px 13px 12px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
 .card-main{flex:1;min-width:0}
-.chevron{color:var(--t3);font-size:22px;flex-shrink:0;padding-top:1px;transition:transform .2s}
+.chevron{color:var(--t3);font-size:22px;flex-shrink:0;padding-top:2px;transition:transform .2s}
 .card.open>.card-head .chevron{transform:rotate(180deg)}
 
-.bill-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap}
-.bill-no{font-family:'Barlow Condensed',monospace;font-size:20px;font-weight:800;letter-spacing:.5px}
-.done-tick{color:var(--green);font-size:18px;font-weight:700}
+/* Party name FIRST — large and bold */
+.party-name{font-size:19px;font-weight:800;color:var(--text);margin-bottom:7px;line-height:1.25;word-break:break-word}
+
+/* Cases — second, prominent */
+.cases-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+.cases-badge{
+  background:var(--text);color:#fff;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;
+  padding:4px 11px;border-radius:8px;letter-spacing:.3px
+}
+.urgent-tag{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px}
+
+/* Bill info row */
+.bill-info-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .co-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid;white-space:nowrap}
-.co-SNT{background:#FFFBEB;color:#92400E;border-color:#FCD34D}
+.co-SNT    {background:#FFFBEB;color:#92400E;border-color:#FCD34D}
 .co-MaaRani{background:#FFF0F6;color:#9D174D;border-color:#F9A8D4}
-.co-Lupin{background:var(--blue-bg);color:#1E40AF;border-color:#BFDBFE}
-.co-Sun{background:#FFF7ED;color:#9A3412;border-color:#FDBA74}
-.co-Torque{background:#F5F3FF;color:#5B21B6;border-color:#C4B5FD}
-.utag{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
-.sav-tag{background:var(--purple);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
-
-.party-name{font-size:16px;font-weight:700;margin-bottom:9px;line-height:1.3}
-
-.ichips{display:flex;flex-wrap:wrap;gap:5px}
-.ic{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:5px 10px;font-size:12px;color:var(--t2);font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.co-Lupin  {background:var(--blue-bg);color:#1E40AF;border-color:#BFDBFE}
+.co-Sun    {background:#FFF7ED;color:#9A3412;border-color:#FDBA74}
+.co-Torque {background:#F5F3FF;color:#5B21B6;border-color:#C4B5FD}
+.bill-no-chip{font-family:'Barlow Condensed',monospace;font-size:13px;font-weight:700;color:var(--t2);background:var(--bg);border:1.5px solid var(--border);padding:3px 8px;border-radius:6px}
+.ic{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--t2);font-weight:500;display:inline-flex;align-items:center;gap:3px}
 .ic.blue{background:var(--blue-bg);border-color:#BFDBFE;color:#1E40AF;font-weight:700}
-.ic.amber{background:var(--amber-bg);border-color:var(--amber-lt);color:var(--amber);font-weight:700}
-.ic.green{background:var(--green-bg);border-color:var(--green-lt);color:var(--green);font-weight:700}
-.ic.time{font-family:'Barlow Condensed',monospace;font-size:13px;background:var(--green-bg);border-color:var(--green-lt);color:var(--green);font-weight:700}
 
-/* CARD BODY */
-.card-body{display:none;padding:14px 13px 15px;border-top:1.5px solid var(--border);margin:0 13px;padding-top:14px}
+/* ─── CARD BODY ───────────────── */
+.card-body{display:none;padding:14px 13px 15px;border-top:1.5px solid var(--border)}
 .card.open .card-body{display:block}
 .field-lbl{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
-.t-select{width:100%;padding:13px 14px;font-size:16px;font-family:inherit;font-weight:600;background:var(--surface);border:2px solid var(--border-strong);border-radius:var(--rs);color:var(--text);outline:none;cursor:pointer}
+.t-select{width:100%;padding:13px 14px;font-size:16px;font-family:inherit;font-weight:600;background:var(--surface);border:2px solid var(--border-strong);border-radius:var(--rs);color:var(--text);outline:none}
 .t-select:focus{border-color:var(--blue)}
-.t-warn{display:none;font-size:12px;font-weight:600;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber)}
+.t-warn{display:none;font-size:12px;font-weight:600;color:var(--amber);margin-top:6px;padding:7px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber)}
 .t-warn.show{display:block}
-.disp-btn{width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:13px;box-shadow:0 3px 12px rgba(21,128,61,.3);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s,box-shadow .1s}
-.disp-btn:active{transform:scale(.98);box-shadow:none}
 
-/* UNDO */
-.undo-btn{background:var(--amber-bg);border:2px solid var(--amber-lt);color:var(--amber);border-radius:var(--rs);padding:8px 11px;cursor:pointer;font-family:inherit;text-align:center;min-width:68px;flex-shrink:0;transition:background .15s}
-.undo-btn:active{background:var(--amber-lt)}
-.undo-btn.disabled{opacity:.45;pointer-events:none}
-.ub-label{font-size:13px;font-weight:800;display:block}
-.ub-time{font-size:11px;font-weight:500;display:block;margin-top:2px;color:#92400E}
+/* Vehicle picker */
+.veh-pick{display:flex;gap:9px;margin-top:12px}
+.veh-pick-btn{
+  flex:1;padding:12px 8px;border-radius:var(--rs);
+  font-size:14px;font-weight:700;font-family:inherit;
+  border:2px solid var(--border);background:var(--bg);
+  color:var(--t2);cursor:pointer;text-align:center;
+  transition:all .15s;line-height:1.3
+}
+.veh-pick-btn .veh-pick-sub{display:block;font-size:10px;font-weight:500;margin-top:2px;color:var(--t3)}
+.veh-pick-btn.sel-big{background:var(--big-bg);border-color:var(--big);color:var(--big)}
+.veh-pick-btn.sel-big .veh-pick-sub{color:var(--big);opacity:.7}
+.veh-pick-btn.sel-small{background:var(--small-bg);border-color:var(--small);color:var(--small)}
+.veh-pick-btn.sel-small .veh-pick-sub{color:var(--small);opacity:.7}
+.veh-pick-btn.sel-none{background:var(--bg);border-color:var(--border-strong);color:var(--t2)}
 
-/* EMPTY */
+.disp-btn{width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 14px rgba(21,128,61,.25)}
+.disp-btn:active{opacity:.85}
+
+/* ─── DONE CARD ───────────────── */
+.done-card{
+  background:var(--green-bg);border:1.5px solid var(--green-lt);
+  border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)
+}
+.done-card.highlight{animation:pulse-g 1.2s ease-out}
+@keyframes pulse-g{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}60%{box-shadow:0 0 0 8px rgba(21,128,61,0)}100%{box-shadow:var(--s1)}}
+
+.done-top{padding:13px 13px 11px}
+.done-name{font-size:18px;font-weight:800;color:var(--green-dk);margin-bottom:7px;line-height:1.25}
+.done-row1{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:8px}
+.done-cases{background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;padding:3px 10px;border-radius:7px}
+.done-time{background:#DCFCE7;border:1.5px solid var(--green-lt);border-radius:16px;padding:4px 10px;font-family:'Barlow Condensed',monospace;font-size:13px;color:var(--green-dk);font-weight:700}
+.done-transport{background:#DCFCE7;border:1.5px solid var(--green-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--green-dk);font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.veh-tag-big  {background:var(--big-bg);border:1.5px solid var(--big-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--big);font-weight:700}
+.veh-tag-small{background:var(--small-bg);border:1.5px solid var(--small-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--small);font-weight:700}
+.done-row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.done-co{font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px;border:1.5px solid}
+.done-bill{font-size:11px;color:var(--t3);font-family:'Barlow Condensed',monospace;font-weight:600}
+.was-chip{background:var(--amber-bg);border:1.5px solid var(--amber-lt);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--amber);font-weight:600}
+
+/* Undo — full width, unmissable */
+.undo-btn{
+  display:flex;align-items:center;gap:10px;
+  width:calc(100% - 26px);margin:0 13px 13px;
+  padding:14px 14px;
+  background:#FEF3C7;border:2px solid #FCD34D;
+  border-radius:var(--rs);cursor:pointer;font-family:inherit;
+  color:#78350F;transition:background .15s
+}
+.undo-btn:active{background:#FDE68A}
+.undo-btn.disabled{opacity:.4;pointer-events:none}
+.undo-icon{font-size:18px}
+.undo-text{flex:1;text-align:left}
+.undo-label{font-size:14px;font-weight:800;display:block}
+.undo-sub{font-size:11px;font-weight:500;color:#92400E;display:block;margin-top:1px}
+.undo-timer{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;white-space:nowrap}
+
+/* ─── EMPTY ───────────────────── */
 .empty{text-align:center;padding:60px 20px 40px}
 .empty-icon{font-size:52px;margin-bottom:14px}
 .empty-title{font-size:18px;font-weight:700;color:var(--t2);margin-bottom:6px}
 .empty-sub{font-size:14px;color:var(--t3)}
 
-/* TOAST */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:24px;font-weight:700;font-size:13.5px;z-index:999;box-shadow:var(--s2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;max-width:92vw}
+/* ─── TOAST ───────────────────── */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:24px;font-weight:700;font-size:13.5px;z-index:999;box-shadow:0 4px 14px rgba(0,0,0,.15);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;max-width:92vw}
 .toast.show{opacity:1}
-.toast.ok{background:#052E16;color:#D1FAE5}
-.toast.err{background:#7F1D1D;color:#FEE2E2}
+.toast.ok  {background:#052E16;color:#D1FAE5}
+.toast.err {background:#7F1D1D;color:#FEE2E2}
 .toast.info{background:#1E1B4B;color:#EDE9FE}
 </style>
 </head>
 <body>
 
+<!-- APP BAR -->
 <header class="app-bar">
   <span class="bar-logo">SNT</span>
   <span class="bar-title">Gate Dispatch</span>
   <span class="bar-clock" id="clock">--:--</span>
-  <button class="refresh-btn" id="refreshBtn" onclick="loadData()" title="Refresh">↻</button>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
 </header>
 
+<!-- BANNER -->
 <div class="banner b-load" id="banner">
-  <span class="dot"></span>
-  <span id="bannerTxt">Connecting…</span>
+  <span class="dot"></span><span id="bannerTxt">Connecting…</span>
 </div>
 
-<div class="stats-bar" id="statsBar"><span class="si gray">Loading…</span></div>
+<!-- VEHICLE PANEL -->
+<div class="veh-panel" id="vehPanel">
+  <button class="veh-toggle" onclick="toggleVehPanel()">
+    <span style="font-size:20px">🚛</span>
+    <span class="veh-toggle-title">Vehicle Load</span>
+    <span class="veh-toggle-summary" id="vehSummary">No vehicles loaded yet</span>
+    <span class="veh-toggle-chevron">⌄</span>
+  </button>
+  <div class="veh-body" id="vehBody">
 
+    <!-- BIG -->
+    <div class="veh-card big">
+      <div class="veh-header">
+        <span class="veh-icon">🚛</span>
+        <span class="veh-name">BIG VEHICLE</span>
+        <div>
+          <div class="veh-cases" id="bigCases">0</div>
+          <div class="veh-cases-label">CASES</div>
+        </div>
+      </div>
+      <div class="veh-bills" id="bigBills">
+        <span class="veh-empty">Nothing loaded yet</span>
+      </div>
+    </div>
+
+    <!-- SMALL -->
+    <div class="veh-card small">
+      <div class="veh-header">
+        <span class="veh-icon">🚐</span>
+        <span class="veh-name">SMALL VEHICLE</span>
+        <div>
+          <div class="veh-cases" id="smallCases">0</div>
+          <div class="veh-cases-label">CASES</div>
+        </div>
+      </div>
+      <div class="veh-bills" id="smallBills">
+        <span class="veh-empty">Nothing loaded yet</span>
+      </div>
+    </div>
+
+    <button class="veh-clear-btn" onclick="clearVehicles()">🗑 Clear all vehicle assignments for today</button>
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar" id="statsBar">
+  <span class="si gray">Loading…</span>
+</div>
+
+<!-- COMPANY CHIPS -->
 <div class="chips-row">
   <button class="chip active" data-co="ALL"      onclick="setFilter('ALL')">All <span class="cbadge" id="cnt-ALL">–</span></button>
   <button class="chip"        data-co="SNT"      onclick="setFilter('SNT')">SNT <span class="cbadge zero" id="cnt-SNT">0</span></button>
@@ -165,12 +317,14 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
   <button class="chip"        data-co="Torque"   onclick="setFilter('Torque')">Torque <span class="cbadge zero" id="cnt-Torque">0</span></button>
 </div>
 
+<!-- SEARCH -->
 <div class="search-row">
   <span class="search-icon">🔍</span>
   <input type="search" id="searchInput" class="search-input"
-    placeholder="Search bill, party, transport…" oninput="onSearch()"/>
+    placeholder="Search party name, bill no, city…" oninput="onSearch()"/>
 </div>
 
+<!-- MAIN LIST -->
 <main class="list" id="list">
   <div class="empty">
     <div class="empty-icon">🔌</div>
@@ -182,27 +336,33 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  CONFIG — URL hardcoded, no setup screen ever
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydYyG2SwhfYqNhCeq7U2jr6e2nxZ5sOYbwsFVmDtveg5IR76xV2offPqiAxiiDCr7l/exec';
 const COMPANIES  = ['SNT','Maa Rani','Lupin','Sun','Torque'];
 const ONE_HOUR   = 3600000;
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 let records    = [];
 let transports = [];
 let filter     = 'ALL';
 let search     = '';
 let openId     = null;
-let saving     = {};   // id → true while a background op is in flight
+let saving     = {};
+let lastDispId = null;
 
-// ═══════════════════════════════════════════════════
+// Vehicle assignments: { id → { vehicle:'big'|'small'|null, party, cases, billNo } }
+// Stored in localStorage, keyed by today's date to auto-reset each day
+let vehMap = {};    // id → 'big' | 'small' | null
+
+// ═══════════════════════════════════════════════════════
 //  STARTUP
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 window.onload = () => {
+  loadVehMap();
   startClock();
   loadData();
   setInterval(() => { if (!Object.keys(saving).length) loadData(); }, 60000);
@@ -211,118 +371,207 @@ window.onload = () => {
 
 function startClock() {
   const el = document.getElementById('clock');
-  const tick = () => {
-    const n = new Date();
-    el.textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
-  };
-  tick(); setInterval(tick, 10000);
+  const t = () => { const n=new Date(); el.textContent=pad(n.getHours())+':'+pad(n.getMinutes()); };
+  t(); setInterval(t, 10000);
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  VEHICLE MAP — localStorage, auto-clears daily
+// ═══════════════════════════════════════════════════════
+function todayKey() {
+  const d = new Date();
+  return 'veh_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
+}
+function loadVehMap() {
+  // Clear yesterday's data automatically
+  const keys = Object.keys(localStorage).filter(k => k.startsWith('veh_'));
+  keys.forEach(k => { if (k !== todayKey()) localStorage.removeItem(k); });
+  const raw = localStorage.getItem(todayKey());
+  vehMap = raw ? JSON.parse(raw) : {};
+}
+function saveVehMap() {
+  localStorage.setItem(todayKey(), JSON.stringify(vehMap));
+}
+function setVehicle(id, veh) {
+  if (veh === null) delete vehMap[id];
+  else vehMap[id] = veh;
+  saveVehMap();
+  updateVehPanel();
+  updateStats(Date.now());
+}
+function clearVehicles() {
+  if (!confirm('Clear all vehicle assignments for today?')) return;
+  vehMap = {};
+  saveVehMap();
+  updateVehPanel();
+  updateStats(Date.now());
+  toast('Vehicle assignments cleared','ok');
+}
+
+function toggleVehPanel() {
+  document.getElementById('vehPanel').classList.toggle('open');
+}
+
+function updateVehPanel() {
+  const bigIds   = Object.keys(vehMap).filter(id => vehMap[id]==='big');
+  const smallIds = Object.keys(vehMap).filter(id => vehMap[id]==='small');
+
+  // Helper: find record by id
+  const byId = (id) => records.find(r => r.id === id);
+
+  const sumCases = (ids) => ids.reduce((s, id) => {
+    const r = byId(id);
+    return s + (r ? (parseInt(r.cases)||0) : 0);
+  }, 0);
+
+  const bigCases   = sumCases(bigIds);
+  const smallCases = sumCases(smallIds);
+
+  document.getElementById('bigCases').textContent   = bigCases;
+  document.getElementById('smallCases').textContent = smallCases;
+
+  // Bill chips
+  const renderChips = (ids, container) => {
+    if (!ids.length) {
+      container.innerHTML = '<span class="veh-empty">Nothing loaded yet</span>';
+      return;
+    }
+    container.innerHTML = ids.map(id => {
+      const r = byId(id);
+      const party = r ? r.party : id;
+      const cases = r ? (r.cases||'?') : '?';
+      return `<span class="veh-bill-chip">
+        <span>${esc(truncate(party,18))}</span>
+        <span style="opacity:.7;font-size:10px">${cases}c</span>
+      </span>`;
+    }).join('');
+  };
+
+  renderChips(bigIds,   document.getElementById('bigBills'));
+  renderChips(smallIds, document.getElementById('smallBills'));
+
+  // Summary line
+  const total = bigIds.length + smallIds.length;
+  const summaryEl = document.getElementById('vehSummary');
+  if (!total) {
+    summaryEl.textContent = 'No vehicles loaded yet';
+  } else {
+    summaryEl.textContent =
+      `Big: ${bigCases} cases · Small: ${smallCases} cases`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 //  LOAD
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 async function loadData() {
   setBanner('load','Refreshing…'); spin(true);
   try {
-    const needTransports = transports.length === 0;
-    const reqs = [apiFetch(SCRIPT_URL + '?action=load')];
-    if (needTransports) reqs.push(apiFetch(SCRIPT_URL + '?action=getTransports'));
-
+    const reqs = [apiFetch(SCRIPT_URL+'?action=load')];
+    if (!transports.length) reqs.push(apiFetch(SCRIPT_URL+'?action=getTransports'));
     const [main, tr] = await Promise.all(reqs);
-    if (!main.ok) throw new Error(main.error || 'Load failed');
+    if (!main.ok) throw new Error(main.error||'Load failed');
 
-    // Preserve optimistic records — don't overwrite them with stale server data
     const inFlight = new Set(Object.keys(saving));
-    const fresh = (main.records || []);
-
-    if (inFlight.size === 0) {
-      records = fresh;
+    if (!inFlight.size) {
+      records = main.records || [];
     } else {
-      // Merge: keep local optimistic version for any record currently saving
-      const byId = {};
-      records.forEach(r => byId[r.id] = r);
-      records = fresh.map(r => inFlight.has(r.id) && byId[r.id] ? byId[r.id] : r);
+      const byId = {}; records.forEach(r => byId[r.id]=r);
+      records = (main.records||[]).map(r => inFlight.has(r.id) && byId[r.id] ? byId[r.id] : r);
     }
 
     if (tr && tr.ok) transports = tr.transports || [];
     setBanner('ok','Connected · just now');
+    updateVehPanel();
     render();
   } catch(e) {
     setBanner('err','Cannot reach Sheet — tap ↻');
-    if (!records.length) {
-      document.getElementById('list').innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">📵</div>
-          <div class="empty-title">Connection error</div>
-          <div class="empty-sub">Check internet and tap ↻</div>
-        </div>`;
-    }
+    if (!records.length) document.getElementById('list').innerHTML =
+      `<div class="empty"><div class="empty-icon">📵</div><div class="empty-title">Connection error</div><div class="empty-sub">Check internet and tap ↻</div></div>`;
   } finally { spin(false); }
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  RENDER
-// ═══════════════════════════════════════════════════
+//  Order: ✓ Dispatched → 🔴 Urgent → Pending
+// ═══════════════════════════════════════════════════════
 function render() {
   const now = Date.now();
-  let vis = filter === 'ALL' ? records : records.filter(r => r.company === filter);
-
+  let vis = filter==='ALL' ? records : records.filter(r => r.company===filter);
   if (search) {
     const q = search.toLowerCase();
     vis = vis.filter(r =>
-      r.billNo.toLowerCase().includes(q)               ||
-      r.party.toLowerCase().includes(q)                ||
+      r.party.toLowerCase().includes(q)                    ||
+      r.billNo.toLowerCase().includes(q)                   ||
       (r.suggestedTransport||'').toLowerCase().includes(q) ||
       (r.actualTransport||'').toLowerCase().includes(q)    ||
       (r.city||'').toLowerCase().includes(q)
     );
   }
 
-  const urgP = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
-  const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
-  const done  = vis.filter(r => r.status==='dispatched' && (now-r.dispatchedAt) < ONE_HOUR)
+  const done  = vis.filter(r => r.status==='dispatched' && (now-r.dispatchedAt)<ONE_HOUR)
                    .sort((a,b) => b.dispatchedAt - a.dispatchedAt);
+  const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
+  const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
 
   updateChips(); updateStats(now);
 
   let html = '';
-  if (!urgP.length && !normP.length && !done.length) {
+  if (!done.length && !urgP.length && !normP.length) {
     html = search
       ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(search)}</b>"</div></div>`
       : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No pending dispatches</div></div>`;
   } else {
-    if (urgP.length) { html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`; urgP.forEach(r => html += pendingCard(r)); }
-    if (normP.length) { html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`; normP.forEach(r => html += pendingCard(r)); }
-    if (done.length) { html += `<div class="sec-label lgreen">✓ DISPATCHED &nbsp;${done.length}</div>`; done.forEach(r => html += doneCard(r, now)); }
+    if (done.length) {
+      html += `<div class="sec-label lgreen">✓ DISPATCHED · undo available &nbsp;${done.length}</div>`;
+      done.forEach(r => html += doneCard(r, now));
+    }
+    if (urgP.length) {
+      html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`;
+      urgP.forEach(r => html += pendingCard(r));
+    }
+    if (normP.length) {
+      html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`;
+      normP.forEach(r => html += pendingCard(r));
+    }
   }
 
   document.getElementById('list').innerHTML = html;
+
   if (openId) {
     const el = document.querySelector(`[data-id="${CSS.escape(openId)}"]`);
-    if (el) el.classList.add('open');
+    if (el) {
+      el.classList.add('open');
+      // Restore vehicle picker selection
+      const veh = vehMap[openId] || 'none';
+      syncVehPicker(openId, veh);
+    }
+  }
+
+  if (lastDispId) {
+    const el = document.querySelector(`[data-id="${CSS.escape(lastDispId)}"]`);
+    if (el) { el.classList.add('highlight'); lastDispId = null; }
   }
 }
 
-// ═══════════════════════════════════════════════════
-//  CARDS
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  PENDING CARD
+// ═══════════════════════════════════════════════════════
 function pendingCard(r) {
   const co   = r.company.replace(/\s+/g,'');
-  const isSv = !!saving[r.id];
   const opts = buildOpts(r.suggestedTransport);
   return `
-<div class="card ${r.urgent?'urgent':''} ${isSv?'saving':''}" data-id="${esc(r.id)}">
+<div class="card ${r.urgent?'urgent':''}" data-id="${esc(r.id)}">
   <div class="card-head" onclick="toggleCard('${esc(r.id)}')">
     <div class="card-main">
-      <div class="bill-row">
-        <span class="bill-no">${esc(r.billNo)}</span>
-        <span class="co-badge co-${co}">${esc(r.company)}</span>
-        ${r.urgent?'<span class="utag">⚡ URGENT</span>':''}
-        ${isSv?'<span class="sav-tag">Saving…</span>':''}
-      </div>
       <div class="party-name">${esc(r.party)}</div>
-      <div class="ichips">
-        <span class="ic">📦 ${r.cases||'—'} cases</span>
+      <div class="cases-row">
+        <span class="cases-badge">📦 ${r.cases||'—'} cases</span>
+        ${r.urgent?'<span class="urgent-tag">⚡ URGENT</span>':''}
+      </div>
+      <div class="bill-info-row">
+        <span class="co-badge co-${co}">${esc(r.company)}</span>
+        <span class="bill-no-chip">#${esc(r.billNo)}</span>
         <span class="ic blue">🚛 ${esc(r.suggestedTransport||'—')}</span>
         ${r.city?`<span class="ic">📍 ${esc(r.city)}</span>`:''}
         ${r.billDate?`<span class="ic">📅 ${esc(r.billDate)}</span>`:''}
@@ -331,254 +580,300 @@ function pendingCard(r) {
     <div class="chevron">⌄</div>
   </div>
   <div class="card-body">
-    <div class="field-lbl">Select Transport</div>
+    <div class="field-lbl">Transport</div>
     <select class="t-select" id="ts-${esc(r.id)}"
       onchange="onTrChange('${esc(r.id)}','${esc(r.suggestedTransport||'')}')">
       ${opts}
     </select>
-    <div class="t-warn" id="tw-${esc(r.id)}">⚠ Original suggestion: <b>${esc(r.suggestedTransport||'None')}</b></div>
-    <button class="disp-btn" onclick="doDispatch(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">✓ &nbsp;Dispatch Now</button>
-  </div>
-</div>`;
-}
+    <div class="t-warn" id="tw-${esc(r.id)}">⚠ Suggested was: <b>${esc(r.suggestedTransport||'None')}</b></div>
 
-function doneCard(r, now) {
-  const co      = r.company.replace(/\s+/g,'');
-  const minsLeft = Math.max(0, Math.floor((r.dispatchedAt + ONE_HOUR - now) / 60000));
-  const changed  = r.actualTransport && r.actualTransport !== r.suggestedTransport;
-  const isSv     = !!saving[r.id];
-  return `
-<div class="card done ${isSv?'saving':''}" data-id="${esc(r.id)}">
-  <div class="card-head" style="cursor:default">
-    <div class="card-main">
-      <div class="bill-row">
-        <span class="done-tick">✓</span>
-        <span class="bill-no">${esc(r.billNo)}</span>
-        <span class="co-badge co-${co}">${esc(r.company)}</span>
-        ${isSv?'<span class="sav-tag">Saving…</span>':''}
-      </div>
-      <div class="party-name" style="color:var(--green)">${esc(r.party)}</div>
-      <div class="ichips">
-        <span class="ic green">🚛 ${esc(r.actualTransport||'—')}</span>
-        <span class="ic time">⏱ ${esc(r.dispatchTime||'')}</span>
-        <span class="ic">📦 ${r.cases||'—'} cases</span>
-        ${changed?`<span class="ic amber" style="font-size:11px">was: ${esc(r.suggestedTransport)}</span>`:''}
-      </div>
+    <div class="field-lbl" style="margin-top:14px">Load into vehicle</div>
+    <div class="veh-pick" id="vp-${esc(r.id)}">
+      <button class="veh-pick-btn sel-none" data-veh="none"
+        onclick="pickVeh(event,'${esc(r.id)}','none')">
+        — None
+        <span class="veh-pick-sub">Skip vehicle</span>
+      </button>
+      <button class="veh-pick-btn" data-veh="big"
+        onclick="pickVeh(event,'${esc(r.id)}','big')">
+        🚛 Big
+        <span class="veh-pick-sub" id="vps-big-${esc(r.id)}">${vehCaseLabel('big')}</span>
+      </button>
+      <button class="veh-pick-btn" data-veh="small"
+        onclick="pickVeh(event,'${esc(r.id)}','small')">
+        🚐 Small
+        <span class="veh-pick-sub" id="vps-small-${esc(r.id)}">${vehCaseLabel('small')}</span>
+      </button>
     </div>
-    <button class="undo-btn ${isSv?'disabled':''}"
-      onclick="doUndo(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
-      <span class="ub-label">↩ Undo</span>
-      <span class="ub-time" id="uc-${esc(r.id)}">${minsLeft}m left</span>
+
+    <button class="disp-btn" onclick="doDispatch(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
+      ✓ &nbsp;Dispatch Now
     </button>
   </div>
 </div>`;
 }
 
-// ═══════════════════════════════════════════════════
-//  DISPATCH — optimistic: update UI first, save in background
-// ═══════════════════════════════════════════════════
+function vehCaseLabel(veh) {
+  const ids   = Object.keys(vehMap).filter(id => vehMap[id]===veh);
+  const cases = ids.reduce((s,id) => { const r=records.find(x=>x.id===id); return s+(r?parseInt(r.cases)||0:0); }, 0);
+  const n     = ids.length;
+  return n ? `${n} bill${n>1?'s':''} · ${cases}c` : 'empty';
+}
+
+function pickVeh(e, id, veh) {
+  e.stopPropagation();
+  // Toggle: clicking active choice removes it
+  const current = vehMap[id] || 'none';
+  const newVeh  = (current === veh) ? 'none' : veh;
+  if (newVeh === 'none') delete vehMap[id];
+  else vehMap[id] = newVeh;
+  syncVehPicker(id, newVeh);
+  // Update sub-labels live
+  ['big','small'].forEach(v => {
+    const lbl = document.getElementById('vps-'+v+'-'+id);
+    if (lbl) lbl.textContent = vehCaseLabel(v);
+  });
+}
+
+function syncVehPicker(id, veh) {
+  const wrap = document.getElementById('vp-'+id);
+  if (!wrap) return;
+  wrap.querySelectorAll('.veh-pick-btn').forEach(btn => {
+    const bv = btn.dataset.veh;
+    btn.className = 'veh-pick-btn ' + (bv===veh||(!veh&&bv==='none') ? ('sel-'+bv) : '');
+    if (bv==='none' && veh==='none') btn.className='veh-pick-btn sel-none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  DONE CARD
+// ═══════════════════════════════════════════════════════
+function doneCard(r, now) {
+  const co       = r.company.replace(/\s+/g,'');
+  const minsLeft = Math.max(0, Math.floor((r.dispatchedAt+ONE_HOUR-now)/60000));
+  const changed  = r.actualTransport && r.actualTransport !== r.suggestedTransport;
+  const isSv     = !!saving[r.id];
+  const veh      = vehMap[r.id] || null;
+
+  return `
+<div class="done-card" data-id="${esc(r.id)}">
+  <div class="done-top">
+    <div class="done-name">${esc(r.party)}</div>
+    <div class="done-row1">
+      <span class="done-cases">📦 ${r.cases||'—'} cases</span>
+      <span class="done-time">⏱ ${esc(r.dispatchTime||'')}</span>
+      <span class="done-transport">🚛 ${esc(r.actualTransport||'—')}</span>
+      ${veh==='big'   ? '<span class="veh-tag-big">🚛 BIG</span>'   : ''}
+      ${veh==='small' ? '<span class="veh-tag-small">🚐 SMALL</span>': ''}
+      ${changed ? `<span class="was-chip">was: ${esc(r.suggestedTransport)}</span>` : ''}
+    </div>
+    <div class="done-row2">
+      <span class="done-co co-badge co-${co}">${esc(r.company)}</span>
+      <span class="done-bill">#${esc(r.billNo)}</span>
+      ${r.city?`<span class="ic" style="font-size:11px">📍 ${esc(r.city)}</span>`:''}
+    </div>
+  </div>
+  <button class="undo-btn ${isSv?'disabled':''}"
+    onclick="doUndo(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
+    <span class="undo-icon">↩</span>
+    <span class="undo-text">
+      <span class="undo-label">Undo Dispatch</span>
+      <span class="undo-sub">Move back to pending · change transport or vehicle</span>
+    </span>
+    <span class="undo-timer" id="uc-${esc(r.id)}">${minsLeft}m left</span>
+  </button>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  DISPATCH — optimistic
+// ═══════════════════════════════════════════════════════
 function doDispatch(e, id, company, billNo) {
   e.stopPropagation();
   if (saving[id]) return;
 
-  const sel = document.getElementById('ts-' + id);
+  const sel       = document.getElementById('ts-'+id);
   const transport = sel ? sel.value : '';
   if (!transport) { toast('Select a transport first','err'); return; }
 
-  const rec = records.find(r => r.id === id);
+  const rec = records.find(r => r.id===id);
   if (!rec) return;
-
-  // Snapshot for rollback
   const snap = { ...rec };
 
-  // ── Instant UI update ──
+  // Persist vehicle assignment
+  const currentVeh = vehMap[id] || null;
+  if (currentVeh) saveVehMap();
+
   const now = new Date();
   rec.status          = 'dispatched';
   rec.actualTransport = transport;
-  rec.dispatchTime    = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  rec.dispatchTime    = pad(now.getHours())+':'+pad(now.getMinutes());
   rec.dispatchedAt    = now.getTime();
   openId = null;
+  lastDispId = id;
   saving[id] = true;
   render();
+  updateVehPanel();
+  // Scroll to top to show undo button immediately
+  window.scrollTo({top:0, behavior:'smooth'});
 
-  // ── Background save ──
-  const url = `${SCRIPT_URL}?action=dispatch&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}&transport=${encodeURIComponent(transport)}`;
+  const url = `${SCRIPT_URL}?action=dispatch`
+    + `&company=${encodeURIComponent(company)}`
+    + `&billNo=${encodeURIComponent(billNo)}`
+    + `&transport=${encodeURIComponent(transport)}`;
 
   apiFetch(url).then(data => {
     delete saving[id];
-    if (!data.ok) {
-      Object.assign(rec, snap); // rollback
-      render();
-      toast('Save failed: ' + (data.error||'error'), 'err');
-      return;
-    }
-    // Patch with authoritative server time
+    if (!data.ok) { Object.assign(rec, snap); render(); toast('Save failed: '+(data.error||'error'),'err'); return; }
     if (data.dispatchTime) rec.dispatchTime = data.dispatchTime;
     if (data.dispatchedAt) rec.dispatchedAt = data.dispatchedAt;
     render();
-    toast('✓ ' + billNo + ' dispatched · ' + rec.dispatchTime, 'ok');
+    toast('✓ '+billNo+' dispatched · '+rec.dispatchTime,'ok');
   }).catch(() => {
     delete saving[id];
     Object.assign(rec, snap);
     render();
-    toast('Network error — tap ↻ to retry', 'err');
+    toast('Network error — try again','err');
   });
 }
 
-// ═══════════════════════════════════════════════════
-//  UNDO — optimistic, resets the 1-hour window fully each time
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  UNDO — optimistic, also removes vehicle assignment
+// ═══════════════════════════════════════════════════════
 function doUndo(e, id, company, billNo) {
   e.stopPropagation();
   if (saving[id]) return;
 
-  const rec = records.find(r => r.id === id);
+  const rec = records.find(r => r.id===id);
   if (!rec) return;
-
   const snap = { ...rec };
 
-  // ── Instant UI update — card moves back to pending ──
-  rec.status          = 'pending';
-  rec.actualTransport = null;
-  rec.dispatchTime    = null;
-  rec.dispatchedAt    = null;
+  rec.status='pending'; rec.actualTransport=null; rec.dispatchTime=null; rec.dispatchedAt=null;
   saving[id] = true;
-  // Do NOT restore openId — gatekeeper should explicitly re-tap to re-dispatch
-  render();
+
+  // Remove vehicle assignment on undo
+  delete vehMap[id];
+  saveVehMap();
+
+  render(); updateVehPanel();
 
   const url = `${SCRIPT_URL}?action=undo&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}`;
-
   apiFetch(url).then(data => {
     delete saving[id];
-    if (!data.ok) {
-      Object.assign(rec, snap);
-      render();
-      toast('Undo failed: ' + (data.error||'error'), 'err');
-      return;
-    }
+    if (!data.ok) { Object.assign(rec, snap); render(); toast('Undo failed: '+(data.error||'error'),'err'); return; }
     render();
-    toast('↩ ' + billNo + ' back to pending', 'ok');
+    toast('↩ '+billNo+' back to pending','ok');
   }).catch(() => {
     delete saving[id];
     Object.assign(rec, snap);
     render();
-    toast('Network error — try again', 'err');
+    toast('Network error — try again','err');
   });
 }
 
-// ═══════════════════════════════════════════════════
-//  CARD INTERACTION
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  CARD TOGGLE
+// ═══════════════════════════════════════════════════════
 function toggleCard(id) {
-  if (openId === id) {
-    openId = null;
+  if (openId===id) {
+    openId=null;
     document.querySelector(`[data-id="${CSS.escape(id)}"]`)?.classList.remove('open');
   } else {
     if (openId) document.querySelector(`[data-id="${CSS.escape(openId)}"]`)?.classList.remove('open');
-    openId = id;
+    openId=id;
     const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
     el?.classList.add('open');
+    // Restore saved vehicle pick
+    const veh = vehMap[id] || 'none';
+    syncVehPicker(id, veh);
     setTimeout(() => el?.scrollIntoView({behavior:'smooth',block:'nearest'}), 60);
   }
 }
 
 function onTrChange(id, suggested) {
-  const sel  = document.getElementById('ts-' + id);
-  const warn = document.getElementById('tw-' + id);
-  if (sel && warn) warn.classList.toggle('show', !!suggested && sel.value !== suggested);
+  const s=document.getElementById('ts-'+id), w=document.getElementById('tw-'+id);
+  if(s&&w) w.classList.toggle('show', !!suggested && s.value!==suggested);
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  FILTER & SEARCH
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 function setFilter(co) {
-  filter = co;
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.co === co));
+  filter=co;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.co===co));
   render();
 }
-function onSearch() {
-  search = document.getElementById('searchInput').value.trim();
-  render();
-}
+function onSearch() { search=document.getElementById('searchInput').value.trim(); render(); }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  COUNTDOWNS
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 function tickCountdowns() {
   const now = Date.now();
-  const before = records.filter(r => r.status==='dispatched').length;
-  records = records.filter(r => r.status!=='dispatched' || (now-r.dispatchedAt) < ONE_HOUR);
-  const after = records.filter(r => r.status==='dispatched').length;
-  records.filter(r => r.status==='dispatched').forEach(r => {
-    const el = document.getElementById('uc-' + r.id);
-    if (el) el.textContent = Math.max(0, Math.floor((r.dispatchedAt + ONE_HOUR - now) / 60000)) + 'm left';
+  const before = records.filter(r=>r.status==='dispatched').length;
+  records = records.filter(r => r.status!=='dispatched' || (now-r.dispatchedAt)<ONE_HOUR);
+  records.filter(r=>r.status==='dispatched').forEach(r => {
+    const el=document.getElementById('uc-'+r.id);
+    if(el) el.textContent=Math.max(0,Math.floor((r.dispatchedAt+ONE_HOUR-now)/60000))+'m left';
   });
-  if (before !== after) render();
+  if(records.filter(r=>r.status==='dispatched').length !== before) render();
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  CHIPS & STATS
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 function updateChips() {
-  const allP = records.filter(r => r.status==='pending').length;
+  const allP = records.filter(r=>r.status==='pending').length;
   setCount('ALL', allP);
-  COMPANIES.forEach(co => setCount(co, records.filter(r => r.company===co && r.status==='pending').length));
+  COMPANIES.forEach(co => setCount(co, records.filter(r=>r.company===co&&r.status==='pending').length));
 }
-function setCount(co, n) {
-  const el = document.getElementById('cnt-' + co.replace(/\s+/g,''));
-  if (!el) return;
-  el.textContent = n || '';
-  el.classList.toggle('zero', n === 0);
+function setCount(co,n) {
+  const el=document.getElementById('cnt-'+co.replace(/\s+/g,''));
+  if(!el) return; el.textContent=n||''; el.classList.toggle('zero',n===0);
 }
 function updateStats(now) {
-  const urg  = records.filter(r => r.status==='pending' && r.urgent).length;
-  const pend = records.filter(r => r.status==='pending').length;
-  const done = records.filter(r => r.status==='dispatched' && (now-r.dispatchedAt)<ONE_HOUR).length;
-  document.getElementById('statsBar').innerHTML = `
-    ${urg?`<span class="si red">🔴 ${urg} urgent</span>`:''}
-    <span class="si gray">⏳ ${pend} pending</span>
-    <span class="si green">✓ ${done} dispatched</span>`;
+  const urg  = records.filter(r=>r.status==='pending'&&r.urgent).length;
+  const pend = records.filter(r=>r.status==='pending').length;
+  const win  = records.filter(r=>r.status==='dispatched'&&(now-r.dispatchedAt)<ONE_HOUR).length;
+  const bigC = Object.keys(vehMap).filter(id=>vehMap[id]==='big').reduce((s,id)=>{const r=records.find(x=>x.id===id);return s+(r?parseInt(r.cases)||0:0);},0);
+  const smlC = Object.keys(vehMap).filter(id=>vehMap[id]==='small').reduce((s,id)=>{const r=records.find(x=>x.id===id);return s+(r?parseInt(r.cases)||0:0);},0);
+  document.getElementById('statsBar').innerHTML =
+    `${urg?`<span class="si red">🔴 ${urg} urgent</span>`:''}
+     <span class="si gray">⏳ ${pend} pending</span>
+     <span class="si grn">✓ ${win} dispatched</span>
+     ${bigC?`<span class="si big">🚛 Big: ${bigC}c</span>`:''}
+     ${smlC?`<span class="si sml">🚐 Small: ${smlC}c</span>`:''}`;
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 function buildOpts(suggested) {
-  const list = [...transports];
-  if (suggested && !list.includes(suggested)) list.unshift(suggested);
-  if (!list.length) return `<option value="${esc(suggested||'')}">${esc(suggested||'(No transports)')}</option>`;
-  return list.map(t => `<option value="${esc(t)}"${t===suggested?' selected':''}>${esc(t)}</option>`).join('');
+  const list=[...transports];
+  if(suggested&&!list.includes(suggested)) list.unshift(suggested);
+  if(!list.length) return `<option value="${esc(suggested||'')}">${esc(suggested||'(No transports)')}</option>`;
+  return list.map(t=>`<option value="${esc(t)}"${t===suggested?' selected':''}>${esc(t)}</option>`).join('');
 }
 
 async function apiFetch(url) {
-  const r = await fetch(url, {redirect:'follow'});
-  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const r=await fetch(url,{redirect:'follow'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
 
-function byDate(a,b) { return parseDMY(a.billDate) - parseDMY(b.billDate); }
-function parseDMY(s) {
-  if (!s) return 0;
-  const [d,m,y] = s.split('/');
-  return new Date(+y,+m-1,+d).getTime() || 0;
-}
-function pad(n) { return String(n).padStart(2,'0'); }
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
-
-function setBanner(state, msg) {
-  document.getElementById('banner').className = 'banner b-' + state;
-  document.getElementById('bannerTxt').textContent = msg;
-}
-function spin(v) { document.getElementById('refreshBtn').classList.toggle('spin', v); }
+function byDate(a,b){return parseDMY(a.billDate)-parseDMY(b.billDate)}
+function parseDMY(s){if(!s)return 0;const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d).getTime()||0}
+function pad(n){return String(n).padStart(2,'0')}
+function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
+function setBanner(state,msg){document.getElementById('banner').className='banner b-'+state;document.getElementById('bannerTxt').textContent=msg}
+function spin(v){document.getElementById('refreshBtn').classList.toggle('spin',v)}
 
 let toastTimer;
-function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'toast ' + type + ' show';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast '+type+' show';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
 }
 </script>
 </body>
