@@ -2,639 +2,583 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>SNT Dispatch — Google Sheets</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Gate Dispatch · SNT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0f172a;font-family:system-ui,sans-serif;color:#e2e8f0;font-size:13px}
-input,select{background:#0f172a;border:1px solid #1e293b;border-radius:6px;color:#e2e8f0;padding:8px 10px;font-size:12.5px;width:100%;outline:none;font-family:inherit}
-input:focus{border-color:#3b82f6}
-input.err{border-color:#ef4444}
-label{display:block;font-size:10.5px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-weight:600}
-button{border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:700;transition:opacity .15s}
-button:hover{opacity:.85}
-.card{background:#1e293b;border-radius:10px;padding:20px}
-.err-msg{color:#f87171;font-size:10.5px;margin-top:4px}
-.sugg{position:absolute;top:100%;left:0;right:0;background:#0d1b2e;border:1px solid #1e293b;border-radius:6px;z-index:50;max-height:220px;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.6)}
-.sugg-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #1a2744}
-.sugg-item:hover{background:#1e3a5f}
-.sugg-item .name{font-weight:600;font-size:12px}
-.sugg-item .sub{font-size:10.5px;color:#64748b;margin-top:1px}
-.badge{background:#334155;color:#94a3b8;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:6px}
-.badge.active{background:var(--co);color:#0f172a}
-.flash{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:8px;font-weight:700;font-size:13px;z-index:999;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap;pointer-events:none}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
-.dot.green{background:#10b981}
-.dot.red{background:#ef4444}
-.dot.yellow{background:#f59e0b;animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-th{padding:8px 10px;text-align:left;color:#475569;font-weight:600;font-size:10px;letter-spacing:.3px;text-transform:uppercase;border-bottom:1px solid #1e293b;white-space:nowrap;position:sticky;top:0;background:#0d1b2e;z-index:1}
-td{padding:8px 10px;border-bottom:1px solid #0d1b2e;font-size:11.5px}
-tr:nth-child(even) td{background:#0a1628}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F2F4F7;--surface:#FFFFFF;--border:#DDE2EC;--border-strong:#B8C0CE;
+  --text:#0B0F1A;--t2:#4A5568;--t3:#9AA3B2;
+  --red:#D92B2B;--red-bg:#FFF1F1;--red-lt:#FECACA;
+  --green:#15803D;--green-bg:#F0FDF6;--green-lt:#BBF7D0;
+  --amber:#C47E00;--amber-bg:#FFFAEB;--amber-lt:#FDE68A;
+  --blue:#1D4ED8;--blue-bg:#EFF6FF;
+  --purple:#7C3AED;
+  --s1:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+  --s2:0 4px 14px rgba(0,0,0,.10),0 2px 4px rgba(0,0,0,.06);
+  --r:12px;--rs:8px
+}
+html{font-size:16px}
+body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* APP BAR */
+.app-bar{background:var(--surface);border-bottom:1.5px solid var(--border);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--s1)}
+.bar-logo{background:var(--amber);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;padding:4px 10px;border-radius:6px;flex-shrink:0}
+.bar-title{font-weight:700;font-size:16px;flex:1}
+.bar-clock{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--t2);flex-shrink:0}
+.refresh-btn{background:var(--bg);border:1.5px solid var(--border);color:var(--t2);width:40px;height:40px;border-radius:10px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.refresh-btn:active{background:var(--border)}
+.refresh-btn.spin{animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BANNER */
+.banner{padding:8px 14px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px;min-height:36px;border-bottom:1px solid transparent}
+.banner .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.b-ok{background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
+.b-ok .dot{background:var(--green)}
+.b-err{background:var(--red-bg);color:#991B1B;border-color:var(--red-lt)}
+.b-err .dot{background:var(--red)}
+.b-load{background:var(--amber-bg);color:#854D0E;border-color:var(--amber-lt)}
+.b-load .dot{background:var(--amber);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* STATS */
+.stats-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;display:flex;gap:14px;font-size:12.5px;font-weight:600;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.stats-bar::-webkit-scrollbar{display:none}
+.si{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.si.red{color:var(--red)}.si.green{color:var(--green)}.si.gray{color:var(--t2)}
+
+/* CHIPS */
+.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips-row::-webkit-scrollbar{display:none}
+.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 12px;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px;transition:all .15s}
+.chip:active{transform:scale(.95)}
+.chip.active{background:var(--text);color:#fff;border-color:var(--text)}
+.cbadge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.chip.active .cbadge{background:rgba(255,255,255,.25)}
+.cbadge.zero{background:var(--border-strong);color:var(--t3)}
+
+/* SEARCH */
+.search-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;position:relative}
+.search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
+.search-input{width:100%;padding:11px 14px 11px 38px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;color:var(--text);transition:border-color .15s}
+.search-input:focus{border-color:var(--blue);background:#fff}
+.search-input::placeholder{color:var(--t3)}
+
+/* LIST */
+.list{padding:12px 11px 90px}
+.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:6px 3px 8px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-label.lred{color:var(--red)}
+.sec-label.lgreen{color:var(--green)}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
+.card.urgent{border-left:4px solid var(--red);background:var(--red-bg)}
+.card.done{background:var(--green-bg);border-color:var(--green-lt)}
+.card.saving{border-color:var(--purple);opacity:.8}
+
+.card-head{padding:13px 13px 12px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
+.card-main{flex:1;min-width:0}
+.chevron{color:var(--t3);font-size:22px;flex-shrink:0;padding-top:1px;transition:transform .2s}
+.card.open>.card-head .chevron{transform:rotate(180deg)}
+
+.bill-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;flex-wrap:wrap}
+.bill-no{font-family:'Barlow Condensed',monospace;font-size:20px;font-weight:800;letter-spacing:.5px}
+.done-tick{color:var(--green);font-size:18px;font-weight:700}
+.co-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid;white-space:nowrap}
+.co-SNT{background:#FFFBEB;color:#92400E;border-color:#FCD34D}
+.co-MaaRani{background:#FFF0F6;color:#9D174D;border-color:#F9A8D4}
+.co-Lupin{background:var(--blue-bg);color:#1E40AF;border-color:#BFDBFE}
+.co-Sun{background:#FFF7ED;color:#9A3412;border-color:#FDBA74}
+.co-Torque{background:#F5F3FF;color:#5B21B6;border-color:#C4B5FD}
+.utag{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
+.sav-tag{background:var(--purple);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px}
+
+.party-name{font-size:16px;font-weight:700;margin-bottom:9px;line-height:1.3}
+
+.ichips{display:flex;flex-wrap:wrap;gap:5px}
+.ic{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:5px 10px;font-size:12px;color:var(--t2);font-weight:500;display:inline-flex;align-items:center;gap:4px}
+.ic.blue{background:var(--blue-bg);border-color:#BFDBFE;color:#1E40AF;font-weight:700}
+.ic.amber{background:var(--amber-bg);border-color:var(--amber-lt);color:var(--amber);font-weight:700}
+.ic.green{background:var(--green-bg);border-color:var(--green-lt);color:var(--green);font-weight:700}
+.ic.time{font-family:'Barlow Condensed',monospace;font-size:13px;background:var(--green-bg);border-color:var(--green-lt);color:var(--green);font-weight:700}
+
+/* CARD BODY */
+.card-body{display:none;padding:14px 13px 15px;border-top:1.5px solid var(--border);margin:0 13px;padding-top:14px}
+.card.open .card-body{display:block}
+.field-lbl{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.t-select{width:100%;padding:13px 14px;font-size:16px;font-family:inherit;font-weight:600;background:var(--surface);border:2px solid var(--border-strong);border-radius:var(--rs);color:var(--text);outline:none;cursor:pointer}
+.t-select:focus{border-color:var(--blue)}
+.t-warn{display:none;font-size:12px;font-weight:600;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber)}
+.t-warn.show{display:block}
+.disp-btn{width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:13px;box-shadow:0 3px 12px rgba(21,128,61,.3);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .1s,box-shadow .1s}
+.disp-btn:active{transform:scale(.98);box-shadow:none}
+
+/* UNDO */
+.undo-btn{background:var(--amber-bg);border:2px solid var(--amber-lt);color:var(--amber);border-radius:var(--rs);padding:8px 11px;cursor:pointer;font-family:inherit;text-align:center;min-width:68px;flex-shrink:0;transition:background .15s}
+.undo-btn:active{background:var(--amber-lt)}
+.undo-btn.disabled{opacity:.45;pointer-events:none}
+.ub-label{font-size:13px;font-weight:800;display:block}
+.ub-time{font-size:11px;font-weight:500;display:block;margin-top:2px;color:#92400E}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px 40px}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-title{font-size:18px;font-weight:700;color:var(--t2);margin-bottom:6px}
+.empty-sub{font-size:14px;color:var(--t3)}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:24px;font-weight:700;font-size:13.5px;z-index:999;box-shadow:var(--s2);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;max-width:92vw}
+.toast.show{opacity:1}
+.toast.ok{background:#052E16;color:#D1FAE5}
+.toast.err{background:#7F1D1D;color:#FEE2E2}
+.toast.info{background:#1E1B4B;color:#EDE9FE}
 </style>
 </head>
 <body>
 
-<!-- SETUP MODAL -->
-<div id="setupModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center">
-  <div style="background:#1e293b;border-radius:12px;width:min(560px,95vw);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.6)">
-    <div style="font-size:22px;font-weight:800;color:#f59e0b;font-family:monospace;margin-bottom:4px">SNT Dispatch Register</div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:24px">Google Sheets Backend · First-time Setup</div>
+<header class="app-bar">
+  <span class="bar-logo">SNT</span>
+  <span class="bar-title">Gate Dispatch</span>
+  <span class="bar-clock" id="clock">--:--</span>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()" title="Refresh">↻</button>
+</header>
 
-    <div style="background:#0f172a;border-radius:8px;padding:16px;margin-bottom:20px;border:1px solid #1e293b">
-      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px">Quick Setup — 3 Steps</div>
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:12px">
-        <div><span style="color:#f59e0b;font-weight:700;font-family:monospace">Step 1</span> → Create a new Google Sheet at <a href="https://sheets.google.com" target="_blank" style="color:#60a5fa">sheets.google.com</a></div>
-        <div><span style="color:#f59e0b;font-weight:700;font-family:monospace">Step 2</span> → Open <a href="https://script.google.com" target="_blank" style="color:#60a5fa">script.google.com</a> → New project → Paste the <code style="background:#1e293b;padding:1px 5px;border-radius:3px">Code.gs</code> file → Replace <code style="background:#1e293b;padding:1px 5px;border-radius:3px">PASTE_YOUR_SHEET_ID_HERE</code> with your Sheet ID → Deploy as Web App (Execute as: Me · Anyone can access)</div>
-        <div><span style="color:#f59e0b;font-weight:700;font-family:monospace">Step 3</span> → Paste the Web App URL below and click Connect</div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:16px">
-      <label>Apps Script Web App URL</label>
-      <input id="scriptUrlInput" type="text" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px"/>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button id="connectBtn" onclick="connectSheet()" style="flex:1;padding:11px;background:#f59e0b;color:#0f172a;font-size:13px">Test Connection & Save</button>
-    </div>
-    <div id="connectStatus" style="margin-top:10px;font-size:12px;text-align:center"></div>
-  </div>
+<div class="banner b-load" id="banner">
+  <span class="dot"></span>
+  <span id="bannerTxt">Connecting…</span>
 </div>
 
-<!-- FLASH MESSAGE -->
-<div id="flash" class="flash" style="display:none"></div>
+<div class="stats-bar" id="statsBar"><span class="si gray">Loading…</span></div>
 
-<!-- MAIN APP -->
-<div id="app" style="display:none">
-
-  <!-- HEADER -->
-  <div style="background:#1e293b;border-bottom:2px solid #f59e0b;padding:10px 20px;display:flex;align-items:center;gap:12px">
-    <div style="background:#f59e0b;color:#0f172a;font-weight:900;font-size:18px;padding:2px 12px;border-radius:4px;font-family:monospace;letter-spacing:2px">SNT</div>
-    <div>
-      <div style="font-weight:700;font-size:16px;color:#f1f5f9">Dispatch Register</div>
-      <div style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase">Live · Google Sheets Backend</div>
-    </div>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
-      <div id="connIndicator" style="display:flex;align-items:center;font-size:11px;color:#64748b">
-        <span class="dot yellow" id="connDot"></span>
-        <span id="connText">Connecting…</span>
-      </div>
-      <button onclick="exportExcel()" style="padding:6px 12px;background:#166534;color:#86efac;font-size:11px">⬇ Export Excel</button>
-      <button onclick="document.getElementById('setupModal').style.display='flex'" style="padding:6px 12px;background:#1e3a5f;color:#93c5fd;font-size:11px">⚙ Settings</button>
-    </div>
-  </div>
-
-  <!-- TABS (companies) -->
-  <div style="display:flex;background:#1e293b;border-bottom:1px solid #334155;padding:0 16px">
-    <button class="tab-btn active" data-co="SNT" data-color="#f59e0b" onclick="switchTab(this)" style="padding:10px 18px;font-size:12px;font-weight:700;background:none;border:none;border-bottom:3px solid #f59e0b;color:#f59e0b;cursor:pointer;font-family:monospace;letter-spacing:.8px">
-      SNT <span class="badge active" id="cnt-SNT" style="--co:#f59e0b">0</span>
-    </button>
-  </div>
-
-  <!-- MAIN GRID -->
-  <div style="display:grid;grid-template-columns:1fr 360px;height:calc(100vh - 113px)">
-
-    <!-- LEFT: RECORDS TABLE -->
-    <div style="overflow-y:auto;border-right:1px solid #1e293b">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#1a2744;border-bottom:1px solid #1e293b;position:sticky;top:0;z-index:2">
-        <div style="font-size:11px;color:#64748b;font-weight:600" id="tableLabel">0 RECORDS · SNT</div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div id="loadingBar" style="font-size:10px;color:#f59e0b;display:none">⟳ Loading from Sheets…</div>
-          <button onclick="loadRecords(currentCo)" style="padding:4px 10px;background:#1e293b;color:#94a3b8;font-size:10px;border:1px solid #334155">↺ Refresh</button>
-        </div>
-      </div>
-      <div id="tableBody">
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:#334155">
-          <div style="font-size:36px;margin-bottom:10px">📋</div>
-          <div style="font-weight:600">Loading records…</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RIGHT: FORM -->
-    <div style="background:#1e293b;overflow-y:auto;padding:18px">
-      <div id="formHeader" style="border-bottom:2px solid #f59e0b;padding-bottom:10px;margin-bottom:16px">
-        <div style="font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:.8px;text-transform:uppercase">New Entry — SNT</div>
-        <div style="font-size:10px;color:#475569;margin-top:2px">Saves directly to Google Sheet · Permanent</div>
-      </div>
-
-      <!-- Bill No -->
-      <div style="margin-bottom:10px">
-        <label>Bill No *</label>
-        <input id="f-billNo" placeholder="Auto-suggested" style="color:#f59e0b;font-weight:700;font-size:14px;font-family:monospace" onkeydown="if(event.key==='Enter')saveRecord()"/>
-        <div class="err-msg" id="e-billNo" style="display:none"></div>
-      </div>
-
-      <!-- Dates -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <label>Bill Date</label>
-          <input id="f-billDate" type="date"/>
-        </div>
-        <div>
-          <label>Dispatch Date *</label>
-          <input id="f-dispatchDate" type="date"/>
-          <div class="err-msg" id="e-dispatchDate" style="display:none"></div>
-        </div>
-      </div>
-
-      <!-- Party -->
-      <div style="margin-bottom:10px;position:relative">
-        <label>Party Name *</label>
-        <input id="f-party" placeholder="Type to search…" autocomplete="off"
-          oninput="onPartyInput(this.value)"
-          onfocus="onPartyInput(this.value)"
-          onblur="setTimeout(()=>hideSugg('pSugg'),180)"/>
-        <div class="err-msg" id="e-party" style="display:none"></div>
-        <div id="pSugg" class="sugg" style="display:none"></div>
-      </div>
-
-      <!-- City + Transport -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <label>City</label>
-          <input id="f-city" placeholder="Auto-filled"/>
-        </div>
-        <div>
-          <label>Transport</label>
-          <input id="f-transport" placeholder="Auto-filled"/>
-        </div>
-      </div>
-
-      <!-- Amount + Cartons -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <label>Bill Amount (₹)</label>
-          <input id="f-billAmount" type="number" placeholder="0"/>
-        </div>
-        <div>
-          <label>No. of Cartons</label>
-          <input id="f-cartons" type="number" placeholder="0"/>
-        </div>
-      </div>
-
-      <!-- Time + LR -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <div>
-          <label>Dispatch Time</label>
-          <input id="f-time" type="time"/>
-        </div>
-        <div>
-          <label>LR / Eway Bill No.</label>
-          <input id="f-lr" placeholder="LR or Eway No."/>
-        </div>
-      </div>
-
-      <button id="saveBtn" onclick="saveRecord()" style="width:100%;padding:11px;background:#f59e0b;color:#0f172a;font-size:13px;letter-spacing:.3px">
-        Save to Google Sheet
-      </button>
-
-      <!-- Stats -->
-      <div id="statsBox" style="display:none;margin-top:14px;background:#0f172a;border-radius:8px;padding:12px;border:1px solid #1e293b">
-        <div style="font-size:10px;color:#334155;text-transform:uppercase;margin-bottom:8px">Statistics</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-          <div style="text-align:center;background:#1e293b;border-radius:6px;padding:8px 4px">
-            <div id="stat-today" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:monospace">0</div>
-            <div style="font-size:9.5px;color:#475569;margin-top:2px;text-transform:uppercase">Today Bills</div>
-          </div>
-          <div style="text-align:center;background:#1e293b;border-radius:6px;padding:8px 4px">
-            <div id="stat-total" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:monospace">0</div>
-            <div style="font-size:9.5px;color:#475569;margin-top:2px;text-transform:uppercase">Total Bills</div>
-          </div>
-          <div style="text-align:center;background:#1e293b;border-radius:6px;padding:8px 4px">
-            <div id="stat-cartonsToday" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:monospace">0</div>
-            <div style="font-size:9.5px;color:#475569;margin-top:2px;text-transform:uppercase">Today Cartons</div>
-          </div>
-          <div style="text-align:center;background:#1e293b;border-radius:6px;padding:8px 4px">
-            <div id="stat-value" style="font-size:18px;font-weight:800;color:#f59e0b;font-family:monospace">0</div>
-            <div style="font-size:9.5px;color:#475569;margin-top:2px;text-transform:uppercase">Total Value</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="chips-row">
+  <button class="chip active" data-co="ALL"      onclick="setFilter('ALL')">All <span class="cbadge" id="cnt-ALL">–</span></button>
+  <button class="chip"        data-co="SNT"      onclick="setFilter('SNT')">SNT <span class="cbadge zero" id="cnt-SNT">0</span></button>
+  <button class="chip"        data-co="Maa Rani" onclick="setFilter('Maa Rani')">Maa Rani <span class="cbadge zero" id="cnt-MaaRani">0</span></button>
+  <button class="chip"        data-co="Lupin"    onclick="setFilter('Lupin')">Lupin <span class="cbadge zero" id="cnt-Lupin">0</span></button>
+  <button class="chip"        data-co="Sun"      onclick="setFilter('Sun')">Sun <span class="cbadge zero" id="cnt-Sun">0</span></button>
+  <button class="chip"        data-co="Torque"   onclick="setFilter('Torque')">Torque <span class="cbadge zero" id="cnt-Torque">0</span></button>
 </div>
+
+<div class="search-row">
+  <span class="search-icon">🔍</span>
+  <input type="search" id="searchInput" class="search-input"
+    placeholder="Search bill, party, transport…" oninput="onSearch()"/>
+</div>
+
+<main class="list" id="list">
+  <div class="empty">
+    <div class="empty-icon">🔌</div>
+    <div class="empty-title">Connecting…</div>
+    <div class="empty-sub">Please wait</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
 
 <script>
-// ── 10 TEST PARTIES ──────────────────────────────────────────
-const PARTIES = [
-  {n:'9M PHARMALOGIC PVT LTD',   c:'PUNE',        t:'SCORPION'},
-  {n:'ACH HEALTHCARE AHMEDABAD',  c:'AHMEDABAD',   t:'AXAR'},
-  {n:'AMIDHARA MEDICAL AGENCIES', c:'SURAT',       t:'NEW AMRUT'},
-  {n:'BHAGWATI GENERICS',         c:'BARODA',      t:'NEW AMRUT'},
-  {n:'CURE PHARMA  NADIAD',       c:'NADIAD',      t:'DHARA'},
-  {n:'GANESH MEDICAL AGENCY',     c:'AHMEDABAD',   t:'AXAR'},
-  {n:'HEMIR ENTERPRISES  VALSAD', c:'VALSAD',      t:'SURYA'},
-  {n:'KRISHNA PHARMA',            c:'GANDHIDHAM',  t:'KUTCH HIGHWAY'},
-  {n:'LUPIN LIMITED L582(C)',      c:'AHMEDABAD',   t:''},
-  {n:'SAI KRISHNA MEDICAL AGENCY',c:'AHMEDABAD',   t:'AXAR'},
-];
+// ═══════════════════════════════════════════════════
+//  CONFIG — URL hardcoded, no setup screen ever
+// ═══════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydYyG2SwhfYqNhCeq7U2jr6e2nxZ5sOYbwsFVmDtveg5IR76xV2offPqiAxiiDCr7l/exec';
+const COMPANIES  = ['SNT','Maa Rani','Lupin','Sun','Torque'];
+const ONE_HOUR   = 3600000;
 
-// ── STATE ────────────────────────────────────────────────────
-let SCRIPT_URL = localStorage.getItem('snt_script_url') || '';
-let records    = [];   // in-memory records for current company
-let currentCo  = 'SNT';
-let coColor    = '#f59e0b';
-let saving     = false;
+// ═══════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════
+let records    = [];
+let transports = [];
+let filter     = 'ALL';
+let search     = '';
+let openId     = null;
+let saving     = {};   // id → true while a background op is in flight
 
-// ── INIT ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════
+//  STARTUP
+// ═══════════════════════════════════════════════════
 window.onload = () => {
-  initDateFields();
-  suggestNextBill();
-  if (!SCRIPT_URL) {
-    showSetup();
-  } else {
-    showApp();
-    testConnection().then(ok => {
-      if (ok) loadRecords('SNT');
-    });
-  }
+  startClock();
+  loadData();
+  setInterval(() => { if (!Object.keys(saving).length) loadData(); }, 60000);
+  setInterval(tickCountdowns, 30000);
 };
 
-function initDateFields() {
-  const t = today();
-  document.getElementById('f-billDate').value     = t;
-  document.getElementById('f-dispatchDate').value = t;
-  document.getElementById('f-time').value         = nowTime();
-}
-
-function today() {
-  return new Date().toISOString().split('T')[0];
-}
-function nowTime() {
-  const d = new Date();
-  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
-function fmtDate(iso) {
-  if (!iso) return '—';
-  const [y,m,d] = iso.split('/').length === 3 ? iso.split('/') : iso.split('-');
-  // handle both DD/MM/YYYY (from sheet) and YYYY-MM-DD (from form)
-  if (iso.includes('/')) return iso; // already formatted
-  return d+'/'+m+'/'+y;
-}
-function fmtAmt(v) {
-  if (!v && v!==0) return '—';
-  return '₹'+Number(v).toLocaleString('en-IN');
-}
-
-// ── SETUP / CONNECT ──────────────────────────────────────────
-function showSetup() {
-  document.getElementById('setupModal').style.display = 'flex';
-  document.getElementById('app').style.display        = 'none';
-}
-function showApp() {
-  document.getElementById('setupModal').style.display = 'none';
-  document.getElementById('app').style.display        = 'block';
-}
-
-async function connectSheet() {
-  const url = document.getElementById('scriptUrlInput').value.trim();
-  if (!url) { setConnStatus('Enter the Script URL', 'red'); return; }
-
-  setConnStatus('Testing connection…', 'yellow');
-  const btn = document.getElementById('connectBtn');
-  btn.disabled = true; btn.textContent = 'Testing…';
-
-  const ok = await testConnectionUrl(url);
-  btn.disabled = false; btn.textContent = 'Test Connection & Save';
-
-  if (ok) {
-    SCRIPT_URL = url;
-    localStorage.setItem('snt_script_url', url);
-    setConnStatus('✓ Connected! Loading…', 'green');
-    setTimeout(() => {
-      showApp();
-      loadRecords('SNT');
-    }, 800);
-  } else {
-    setConnStatus('✗ Could not connect. Check URL and deployment settings.', 'red');
-  }
-}
-
-function setConnStatus(msg, color) {
-  const el = document.getElementById('connectStatus');
-  el.textContent = msg;
-  el.style.color = color === 'green' ? '#4ade80' : color === 'red' ? '#f87171' : '#f59e0b';
-}
-
-async function testConnectionUrl(url) {
-  try {
-    const res = await fetch(url + '?action=ping', {redirect:'follow'});
-    const data = await res.json();
-    return data.ok === true;
-  } catch { return false; }
-}
-
-async function testConnection() {
-  setConnStatus2('yellow', 'Connecting…');
-  const ok = await testConnectionUrl(SCRIPT_URL);
-  if (ok) {
-    setConnStatus2('green', 'Connected to Google Sheet');
-  } else {
-    setConnStatus2('red', 'Connection failed');
-    flash('⚠ Cannot reach Google Sheet. Check URL in Settings.', 'err');
-  }
-  return ok;
-}
-
-function setConnStatus2(color, text) {
-  const dot = document.getElementById('connDot');
-  const txt = document.getElementById('connText');
-  dot.className = 'dot ' + color;
-  txt.textContent = text;
-}
-
-// ── LOAD RECORDS ─────────────────────────────────────────────
-async function loadRecords(company) {
-  document.getElementById('loadingBar').style.display = 'block';
-  setTableBody('<tr><td colspan="10" style="text-align:center;padding:30px;color:#475569">Loading from Google Sheets…</td></tr>');
-
-  try {
-    const url = SCRIPT_URL + '?action=getAll&company=' + encodeURIComponent(company);
-    const res  = await fetch(url, {redirect:'follow'});
-    const data = await res.json();
-
-    if (!data.ok) throw new Error(data.error || 'API error');
-
-    records = data.records || [];
-    renderTable();
-    updateStats();
-    suggestNextBill();
-    flash('✓ ' + records.length + ' records loaded', 'ok');
-  } catch (e) {
-    flash('⚠ Load failed: ' + e.message, 'err');
-    setTableBody('<tr><td colspan="10" style="text-align:center;padding:30px;color:#ef4444">Failed to load. Check connection.</td></tr>');
-  } finally {
-    document.getElementById('loadingBar').style.display = 'none';
-  }
-}
-
-// ── RENDER TABLE ─────────────────────────────────────────────
-function renderTable() {
-  document.getElementById('tableLabel').textContent = records.length + ' RECORDS · ' + currentCo;
-  document.getElementById('cnt-' + currentCo).textContent = records.length;
-
-  if (records.length === 0) {
-    setTableBody('<tr><td colspan="10" style="text-align:center;padding:40px;color:#334155"><div style="font-size:32px;margin-bottom:8px">📦</div><div>No dispatches yet</div></td></tr>');
-    return;
-  }
-
-  const cols = ['#','Bill No','Date','Party','City','Transport','Amount','Ctns','Time','LR'];
-  let html = '<table style="width:100%;border-collapse:collapse"><thead><tr>' +
-    cols.map(c => '<th>'+c+'</th>').join('') +
-    '</tr></thead><tbody>';
-
-  [...records].reverse().forEach((r, i) => {
-    const rowBg = i%2===0 ? '' : 'background:#0a1628';
-    html += `<tr style="${rowBg}">
-      <td style="color:#334155;font-family:monospace;font-size:10.5px">${records.length - i}</td>
-      <td style="font-family:monospace;color:${coColor};font-weight:700">${r.billNo||'—'}</td>
-      <td style="white-space:nowrap">${r.dispatchDate||'—'}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">${r.party||'—'}</td>
-      <td style="color:#94a3b8">${r.city||'—'}</td>
-      <td style="color:#94a3b8;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.transport||'—'}</td>
-      <td style="color:#4ade80;font-family:monospace">${fmtAmt(r.billAmount)}</td>
-      <td style="text-align:center">${r.cartons||'—'}</td>
-      <td style="color:#94a3b8;font-family:monospace">${r.dispatchTime||'—'}</td>
-      <td style="color:#60a5fa;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.lr||'—'}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  setTableBody(html);
-}
-
-function setTableBody(html) {
-  document.getElementById('tableBody').innerHTML = html;
-}
-
-// ── STATS ────────────────────────────────────────────────────
-function updateStats() {
-  if (!records.length) { document.getElementById('statsBox').style.display='none'; return; }
-  document.getElementById('statsBox').style.display = 'block';
-  const t = today();
-  const todayRecs = records.filter(r => {
-    // dispatchDate stored as DD/MM/YYYY in sheet
-    if (!r.dispatchDate) return false;
-    const iso = r.dispatchDate.includes('/') ?
-      r.dispatchDate.split('/').reverse().join('-') : r.dispatchDate;
-    return iso === t;
-  });
-  document.getElementById('stat-today').textContent  = todayRecs.length;
-  document.getElementById('stat-total').textContent  = records.length;
-  document.getElementById('stat-cartonsToday').textContent = todayRecs.reduce((s,r)=>s+(+r.cartons||0),0);
-  const totalVal = records.reduce((s,r)=>s+(+r.billAmount||0),0);
-  document.getElementById('stat-value').textContent = totalVal>0 ? '₹'+totalVal.toLocaleString('en-IN') : '0';
-}
-
-// ── AUTO BILL NUMBER ─────────────────────────────────────────
-function suggestNextBill() {
-  // SNT prefix is AC00, starting at 6773
-  if (records.length === 0) {
-    document.getElementById('f-billNo').value = 'AC006773';
-    return;
-  }
-  const last = records[records.length-1]?.billNo || '';
-  const prefix = 'AC00';
-  if (last.startsWith(prefix)) {
-    const num = parseInt(last.replace(prefix,''), 10);
-    if (!isNaN(num)) {
-      document.getElementById('f-billNo').value = prefix + String(num+1).padStart(6,'0');
-    }
-  }
-}
-
-// ── PARTY AUTOCOMPLETE ───────────────────────────────────────
-function onPartyInput(val) {
-  const q = val.toUpperCase();
-  const sugg = document.getElementById('pSugg');
-  if (!q) { sugg.style.display='none'; return; }
-
-  const matches = PARTIES.filter(p => p.n.toUpperCase().includes(q)).slice(0,8);
-  if (!matches.length) { sugg.style.display='none'; return; }
-
-  sugg.innerHTML = matches.map((p,i) =>
-    `<div class="sugg-item" onmousedown="selectParty(${i}, '${q}')">
-      <div class="name">${p.n}</div>
-      <div class="sub">${p.c}${p.t?' · '+p.t:''}</div>
-    </div>`
-  ).join('');
-  // Store matches for selection
-  sugg._matches = matches;
-  sugg.style.display = 'block';
-}
-
-function selectParty(idx, q) {
-  const sugg = document.getElementById('pSugg');
-  const matches = PARTIES.filter(p => p.n.toUpperCase().includes(q.toUpperCase())).slice(0,8);
-  const p = matches[idx];
-  if (!p) return;
-  document.getElementById('f-party').value     = p.n;
-  document.getElementById('f-city').value      = p.c;
-  document.getElementById('f-transport').value = p.t;
-  sugg.style.display = 'none';
-}
-
-function hideSugg(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
-// ── VALIDATION ───────────────────────────────────────────────
-function validate() {
-  let ok = true;
-
-  const billNo = val('billNo').trim();
-  clearErr('billNo');
-  if (!billNo) { showErr('billNo', 'Required'); ok=false; }
-  else if (records.some(r => r.billNo === billNo)) { showErr('billNo', '⚠ Duplicate — Bill No. already in Google Sheet'); ok=false; }
-
-  const party = val('party').trim();
-  clearErr('party');
-  if (!party) { showErr('party', 'Required'); ok=false; }
-
-  const billDate = val('billDate');
-  const dispDate = val('dispatchDate');
-  clearErr('dispatchDate');
-  if (!dispDate) { showErr('dispatchDate', 'Required'); ok=false; }
-  else if (billDate && dispDate < billDate) { showErr('dispatchDate', 'Must be on or after Bill Date'); ok=false; }
-
-  return ok;
-}
-
-function val(id) { return document.getElementById('f-'+id)?.value || ''; }
-function showErr(id, msg) {
-  const e = document.getElementById('e-'+id);
-  if (e) { e.textContent=msg; e.style.display='block'; }
-  const i = document.getElementById('f-'+id);
-  if (i) i.classList.add('err');
-}
-function clearErr(id) {
-  const e = document.getElementById('e-'+id);
-  if (e) e.style.display='none';
-  const i = document.getElementById('f-'+id);
-  if (i) i.classList.remove('err');
-}
-
-// ── SAVE RECORD ──────────────────────────────────────────────
-async function saveRecord() {
-  if (saving) return;
-  if (!validate()) return;
-
-  saving = true;
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.textContent = '⟳ Saving to Google Sheet…';
-
-  const rec = {
-    company:      currentCo,
-    billNo:       val('billNo').trim(),
-    billDate:     val('billDate'),
-    dispatchDate: val('dispatchDate'),
-    party:        val('party').trim(),
-    city:         val('city').trim(),
-    transport:    val('transport').trim(),
-    billAmount:   val('billAmount'),
-    cartons:      val('cartons'),
-    dispatchTime: val('time'),
-    lr:           val('lr').trim(),
+function startClock() {
+  const el = document.getElementById('clock');
+  const tick = () => {
+    const n = new Date();
+    el.textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
   };
+  tick(); setInterval(tick, 10000);
+}
 
+// ═══════════════════════════════════════════════════
+//  LOAD
+// ═══════════════════════════════════════════════════
+async function loadData() {
+  setBanner('load','Refreshing…'); spin(true);
   try {
-    const payload = encodeURIComponent(JSON.stringify(rec));
-    const url     = SCRIPT_URL + '?action=add&rec=' + payload;
-    const res     = await fetch(url, {redirect:'follow'});
-    const data    = await res.json();
+    const needTransports = transports.length === 0;
+    const reqs = [apiFetch(SCRIPT_URL + '?action=load')];
+    if (needTransports) reqs.push(apiFetch(SCRIPT_URL + '?action=getTransports'));
 
-    if (!data.ok) throw new Error(data.error || 'Save failed');
+    const [main, tr] = await Promise.all(reqs);
+    if (!main.ok) throw new Error(main.error || 'Load failed');
 
-    // Add to local records immediately (optimistic update)
-    const localRec = {...rec};
-    localRec.billDate     = rec.billDate     ? rec.billDate.split('-').reverse().join('/') : '';
-    localRec.dispatchDate = rec.dispatchDate ? rec.dispatchDate.split('-').reverse().join('/') : '';
-    records.push(localRec);
+    // Preserve optimistic records — don't overwrite them with stale server data
+    const inFlight = new Set(Object.keys(saving));
+    const fresh = (main.records || []);
 
-    renderTable();
-    updateStats();
-    resetForm();
-    flash('✓ Saved to Google Sheet — Row ' + (data.sr+1), 'ok');
+    if (inFlight.size === 0) {
+      records = fresh;
+    } else {
+      // Merge: keep local optimistic version for any record currently saving
+      const byId = {};
+      records.forEach(r => byId[r.id] = r);
+      records = fresh.map(r => inFlight.has(r.id) && byId[r.id] ? byId[r.id] : r);
+    }
 
-  } catch (e) {
-    flash('✗ Save failed: ' + e.message, 'err');
-  } finally {
-    saving = false;
-    btn.disabled = false;
-    btn.textContent = 'Save to Google Sheet';
+    if (tr && tr.ok) transports = tr.transports || [];
+    setBanner('ok','Connected · just now');
+    render();
+  } catch(e) {
+    setBanner('err','Cannot reach Sheet — tap ↻');
+    if (!records.length) {
+      document.getElementById('list').innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">📵</div>
+          <div class="empty-title">Connection error</div>
+          <div class="empty-sub">Check internet and tap ↻</div>
+        </div>`;
+    }
+  } finally { spin(false); }
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════
+function render() {
+  const now = Date.now();
+  let vis = filter === 'ALL' ? records : records.filter(r => r.company === filter);
+
+  if (search) {
+    const q = search.toLowerCase();
+    vis = vis.filter(r =>
+      r.billNo.toLowerCase().includes(q)               ||
+      r.party.toLowerCase().includes(q)                ||
+      (r.suggestedTransport||'').toLowerCase().includes(q) ||
+      (r.actualTransport||'').toLowerCase().includes(q)    ||
+      (r.city||'').toLowerCase().includes(q)
+    );
   }
-}
 
-function resetForm() {
-  suggestNextBill();
-  document.getElementById('f-billDate').value     = today();
-  document.getElementById('f-dispatchDate').value = today();
-  document.getElementById('f-party').value     = '';
-  document.getElementById('f-city').value      = '';
-  document.getElementById('f-transport').value = '';
-  document.getElementById('f-billAmount').value= '';
-  document.getElementById('f-cartons').value   = '';
-  document.getElementById('f-time').value      = nowTime();
-  document.getElementById('f-lr').value        = '';
-  ['billNo','party','dispatchDate'].forEach(clearErr);
-}
+  const urgP = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
+  const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
+  const done  = vis.filter(r => r.status==='dispatched' && (now-r.dispatchedAt) < ONE_HOUR)
+                   .sort((a,b) => b.dispatchedAt - a.dispatchedAt);
 
-// ── TAB SWITCH ───────────────────────────────────────────────
-function switchTab(btn) {
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    const col = b.dataset.color;
-    b.style.borderBottom = '3px solid transparent';
-    b.style.color = '#94a3b8';
-    b.style.fontWeight = '500';
-    b.querySelector('.badge').classList.remove('active');
-  });
-  btn.style.borderBottom = '3px solid ' + btn.dataset.color;
-  btn.style.color = btn.dataset.color;
-  btn.style.fontWeight = '700';
-  btn.querySelector('.badge').classList.add('active');
-  currentCo = btn.dataset.co;
-  coColor   = btn.dataset.color;
-  document.getElementById('formHeader').querySelector('div').style.color = coColor;
-  document.getElementById('formHeader').style.borderBottomColor = coColor;
-  document.getElementById('saveBtn').style.background = coColor;
-  records = [];
-  renderTable();
-  loadRecords(currentCo);
-  suggestNextBill();
-}
+  updateChips(); updateStats(now);
 
-// ── EXPORT EXCEL ─────────────────────────────────────────────
-function exportExcel() {
-  if (!records.length) { flash('No records to export', 'err'); return; }
-  const headers = ['Sr','Bill No','Bill Date','Dispatch Date','Party','City','Transport','Bill Amount','Cartons','Dispatch Time','LR / Eway Bill'];
-  let csv = headers.join(',') + '\n';
-  records.forEach((r,i) => {
-    const row = [i+1, r.billNo, r.billDate||'', r.dispatchDate||'', '"'+(r.party||'')+'"', r.city||'', r.transport||'', r.billAmount||'', r.cartons||'', r.dispatchTime||'', r.lr||''];
-    csv += row.join(',') + '\n';
-  });
-  const blob = new Blob([csv], {type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'Dispatch_'+currentCo+'_'+today()+'.csv';
-  a.click();
-  flash('✓ Exported as CSV (open in Excel)', 'ok');
-}
-
-// ── FLASH MESSAGES ───────────────────────────────────────────
-let flashTimer;
-function flash(msg, type) {
-  const el = document.getElementById('flash');
-  el.textContent = msg;
-  el.style.display = 'block';
-  if (type === 'ok') {
-    el.style.background = '#064e3b'; el.style.color='#6ee7b7'; el.style.border='1px solid #10b981';
+  let html = '';
+  if (!urgP.length && !normP.length && !done.length) {
+    html = search
+      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(search)}</b>"</div></div>`
+      : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No pending dispatches</div></div>`;
   } else {
-    el.style.background = '#7f1d1d'; el.style.color='#fca5a5'; el.style.border='1px solid #ef4444';
+    if (urgP.length) { html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`; urgP.forEach(r => html += pendingCard(r)); }
+    if (normP.length) { html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`; normP.forEach(r => html += pendingCard(r)); }
+    if (done.length) { html += `<div class="sec-label lgreen">✓ DISPATCHED &nbsp;${done.length}</div>`; done.forEach(r => html += doneCard(r, now)); }
   }
-  clearTimeout(flashTimer);
-  flashTimer = setTimeout(() => el.style.display='none', 3000);
+
+  document.getElementById('list').innerHTML = html;
+  if (openId) {
+    const el = document.querySelector(`[data-id="${CSS.escape(openId)}"]`);
+    if (el) el.classList.add('open');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  CARDS
+// ═══════════════════════════════════════════════════
+function pendingCard(r) {
+  const co   = r.company.replace(/\s+/g,'');
+  const isSv = !!saving[r.id];
+  const opts = buildOpts(r.suggestedTransport);
+  return `
+<div class="card ${r.urgent?'urgent':''} ${isSv?'saving':''}" data-id="${esc(r.id)}">
+  <div class="card-head" onclick="toggleCard('${esc(r.id)}')">
+    <div class="card-main">
+      <div class="bill-row">
+        <span class="bill-no">${esc(r.billNo)}</span>
+        <span class="co-badge co-${co}">${esc(r.company)}</span>
+        ${r.urgent?'<span class="utag">⚡ URGENT</span>':''}
+        ${isSv?'<span class="sav-tag">Saving…</span>':''}
+      </div>
+      <div class="party-name">${esc(r.party)}</div>
+      <div class="ichips">
+        <span class="ic">📦 ${r.cases||'—'} cases</span>
+        <span class="ic blue">🚛 ${esc(r.suggestedTransport||'—')}</span>
+        ${r.city?`<span class="ic">📍 ${esc(r.city)}</span>`:''}
+        ${r.billDate?`<span class="ic">📅 ${esc(r.billDate)}</span>`:''}
+      </div>
+    </div>
+    <div class="chevron">⌄</div>
+  </div>
+  <div class="card-body">
+    <div class="field-lbl">Select Transport</div>
+    <select class="t-select" id="ts-${esc(r.id)}"
+      onchange="onTrChange('${esc(r.id)}','${esc(r.suggestedTransport||'')}')">
+      ${opts}
+    </select>
+    <div class="t-warn" id="tw-${esc(r.id)}">⚠ Original suggestion: <b>${esc(r.suggestedTransport||'None')}</b></div>
+    <button class="disp-btn" onclick="doDispatch(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">✓ &nbsp;Dispatch Now</button>
+  </div>
+</div>`;
+}
+
+function doneCard(r, now) {
+  const co      = r.company.replace(/\s+/g,'');
+  const minsLeft = Math.max(0, Math.floor((r.dispatchedAt + ONE_HOUR - now) / 60000));
+  const changed  = r.actualTransport && r.actualTransport !== r.suggestedTransport;
+  const isSv     = !!saving[r.id];
+  return `
+<div class="card done ${isSv?'saving':''}" data-id="${esc(r.id)}">
+  <div class="card-head" style="cursor:default">
+    <div class="card-main">
+      <div class="bill-row">
+        <span class="done-tick">✓</span>
+        <span class="bill-no">${esc(r.billNo)}</span>
+        <span class="co-badge co-${co}">${esc(r.company)}</span>
+        ${isSv?'<span class="sav-tag">Saving…</span>':''}
+      </div>
+      <div class="party-name" style="color:var(--green)">${esc(r.party)}</div>
+      <div class="ichips">
+        <span class="ic green">🚛 ${esc(r.actualTransport||'—')}</span>
+        <span class="ic time">⏱ ${esc(r.dispatchTime||'')}</span>
+        <span class="ic">📦 ${r.cases||'—'} cases</span>
+        ${changed?`<span class="ic amber" style="font-size:11px">was: ${esc(r.suggestedTransport)}</span>`:''}
+      </div>
+    </div>
+    <button class="undo-btn ${isSv?'disabled':''}"
+      onclick="doUndo(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
+      <span class="ub-label">↩ Undo</span>
+      <span class="ub-time" id="uc-${esc(r.id)}">${minsLeft}m left</span>
+    </button>
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  DISPATCH — optimistic: update UI first, save in background
+// ═══════════════════════════════════════════════════
+function doDispatch(e, id, company, billNo) {
+  e.stopPropagation();
+  if (saving[id]) return;
+
+  const sel = document.getElementById('ts-' + id);
+  const transport = sel ? sel.value : '';
+  if (!transport) { toast('Select a transport first','err'); return; }
+
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+
+  // Snapshot for rollback
+  const snap = { ...rec };
+
+  // ── Instant UI update ──
+  const now = new Date();
+  rec.status          = 'dispatched';
+  rec.actualTransport = transport;
+  rec.dispatchTime    = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  rec.dispatchedAt    = now.getTime();
+  openId = null;
+  saving[id] = true;
+  render();
+
+  // ── Background save ──
+  const url = `${SCRIPT_URL}?action=dispatch&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}&transport=${encodeURIComponent(transport)}`;
+
+  apiFetch(url).then(data => {
+    delete saving[id];
+    if (!data.ok) {
+      Object.assign(rec, snap); // rollback
+      render();
+      toast('Save failed: ' + (data.error||'error'), 'err');
+      return;
+    }
+    // Patch with authoritative server time
+    if (data.dispatchTime) rec.dispatchTime = data.dispatchTime;
+    if (data.dispatchedAt) rec.dispatchedAt = data.dispatchedAt;
+    render();
+    toast('✓ ' + billNo + ' dispatched · ' + rec.dispatchTime, 'ok');
+  }).catch(() => {
+    delete saving[id];
+    Object.assign(rec, snap);
+    render();
+    toast('Network error — tap ↻ to retry', 'err');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  UNDO — optimistic, resets the 1-hour window fully each time
+// ═══════════════════════════════════════════════════
+function doUndo(e, id, company, billNo) {
+  e.stopPropagation();
+  if (saving[id]) return;
+
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+
+  const snap = { ...rec };
+
+  // ── Instant UI update — card moves back to pending ──
+  rec.status          = 'pending';
+  rec.actualTransport = null;
+  rec.dispatchTime    = null;
+  rec.dispatchedAt    = null;
+  saving[id] = true;
+  // Do NOT restore openId — gatekeeper should explicitly re-tap to re-dispatch
+  render();
+
+  const url = `${SCRIPT_URL}?action=undo&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}`;
+
+  apiFetch(url).then(data => {
+    delete saving[id];
+    if (!data.ok) {
+      Object.assign(rec, snap);
+      render();
+      toast('Undo failed: ' + (data.error||'error'), 'err');
+      return;
+    }
+    render();
+    toast('↩ ' + billNo + ' back to pending', 'ok');
+  }).catch(() => {
+    delete saving[id];
+    Object.assign(rec, snap);
+    render();
+    toast('Network error — try again', 'err');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  CARD INTERACTION
+// ═══════════════════════════════════════════════════
+function toggleCard(id) {
+  if (openId === id) {
+    openId = null;
+    document.querySelector(`[data-id="${CSS.escape(id)}"]`)?.classList.remove('open');
+  } else {
+    if (openId) document.querySelector(`[data-id="${CSS.escape(openId)}"]`)?.classList.remove('open');
+    openId = id;
+    const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
+    el?.classList.add('open');
+    setTimeout(() => el?.scrollIntoView({behavior:'smooth',block:'nearest'}), 60);
+  }
+}
+
+function onTrChange(id, suggested) {
+  const sel  = document.getElementById('ts-' + id);
+  const warn = document.getElementById('tw-' + id);
+  if (sel && warn) warn.classList.toggle('show', !!suggested && sel.value !== suggested);
+}
+
+// ═══════════════════════════════════════════════════
+//  FILTER & SEARCH
+// ═══════════════════════════════════════════════════
+function setFilter(co) {
+  filter = co;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.co === co));
+  render();
+}
+function onSearch() {
+  search = document.getElementById('searchInput').value.trim();
+  render();
+}
+
+// ═══════════════════════════════════════════════════
+//  COUNTDOWNS
+// ═══════════════════════════════════════════════════
+function tickCountdowns() {
+  const now = Date.now();
+  const before = records.filter(r => r.status==='dispatched').length;
+  records = records.filter(r => r.status!=='dispatched' || (now-r.dispatchedAt) < ONE_HOUR);
+  const after = records.filter(r => r.status==='dispatched').length;
+  records.filter(r => r.status==='dispatched').forEach(r => {
+    const el = document.getElementById('uc-' + r.id);
+    if (el) el.textContent = Math.max(0, Math.floor((r.dispatchedAt + ONE_HOUR - now) / 60000)) + 'm left';
+  });
+  if (before !== after) render();
+}
+
+// ═══════════════════════════════════════════════════
+//  CHIPS & STATS
+// ═══════════════════════════════════════════════════
+function updateChips() {
+  const allP = records.filter(r => r.status==='pending').length;
+  setCount('ALL', allP);
+  COMPANIES.forEach(co => setCount(co, records.filter(r => r.company===co && r.status==='pending').length));
+}
+function setCount(co, n) {
+  const el = document.getElementById('cnt-' + co.replace(/\s+/g,''));
+  if (!el) return;
+  el.textContent = n || '';
+  el.classList.toggle('zero', n === 0);
+}
+function updateStats(now) {
+  const urg  = records.filter(r => r.status==='pending' && r.urgent).length;
+  const pend = records.filter(r => r.status==='pending').length;
+  const done = records.filter(r => r.status==='dispatched' && (now-r.dispatchedAt)<ONE_HOUR).length;
+  document.getElementById('statsBar').innerHTML = `
+    ${urg?`<span class="si red">🔴 ${urg} urgent</span>`:''}
+    <span class="si gray">⏳ ${pend} pending</span>
+    <span class="si green">✓ ${done} dispatched</span>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function buildOpts(suggested) {
+  const list = [...transports];
+  if (suggested && !list.includes(suggested)) list.unshift(suggested);
+  if (!list.length) return `<option value="${esc(suggested||'')}">${esc(suggested||'(No transports)')}</option>`;
+  return list.map(t => `<option value="${esc(t)}"${t===suggested?' selected':''}>${esc(t)}</option>`).join('');
+}
+
+async function apiFetch(url) {
+  const r = await fetch(url, {redirect:'follow'});
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function byDate(a,b) { return parseDMY(a.billDate) - parseDMY(b.billDate); }
+function parseDMY(s) {
+  if (!s) return 0;
+  const [d,m,y] = s.split('/');
+  return new Date(+y,+m-1,+d).getTime() || 0;
+}
+function pad(n) { return String(n).padStart(2,'0'); }
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function setBanner(state, msg) {
+  document.getElementById('banner').className = 'banner b-' + state;
+  document.getElementById('bannerTxt').textContent = msg;
+}
+function spin(v) { document.getElementById('refreshBtn').classList.toggle('spin', v); }
+
+let toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast ' + type + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 </script>
 </body>
