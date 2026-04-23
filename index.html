@@ -30,7 +30,7 @@
 html{font-size:16px}
 body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
 
-/* ─── APP BAR ─────────────────── */
+/* ─── APP BAR ─────── */
 .app-bar{background:var(--surface);border-bottom:1.5px solid var(--border);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .bar-logo{background:var(--amber);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;padding:4px 10px;border-radius:6px;flex-shrink:0}
 .bar-title{font-weight:700;font-size:16px;flex:1}
@@ -40,97 +40,86 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .refresh-btn.spin{animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ─── BANNER ──────────────────── */
+/* ─── BANNER ──────── */
 .banner{padding:8px 14px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px;min-height:36px;border-bottom:1px solid transparent}
 .banner .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.b-ok {background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
+.b-ok  {background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
 .b-ok .dot{background:var(--green)}
-.b-err{background:var(--red-bg);color:#991B1B;border-color:var(--red-lt)}
+.b-err {background:var(--red-bg);color:#991B1B;border-color:var(--red-lt)}
 .b-err .dot{background:var(--red)}
 .b-load{background:var(--amber-bg);color:#854D0E;border-color:var(--amber-lt)}
 .b-load .dot{background:var(--amber);animation:blink 1s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
-/* ─── VEHICLE PANEL ───────────── */
+/* ─── VEHICLE PANEL ── */
 .veh-panel{background:var(--surface);border-bottom:2px solid var(--border)}
-.veh-toggle{
-  width:100%;padding:10px 14px;
-  display:flex;align-items:center;gap:10px;
-  background:none;border:none;font-family:inherit;
-  cursor:pointer;text-align:left
-}
+.veh-toggle{width:100%;padding:10px 14px;display:flex;align-items:center;gap:10px;background:none;border:none;font-family:inherit;cursor:pointer;text-align:left}
 .veh-toggle-title{font-size:13px;font-weight:700;color:var(--t2);flex:1}
 .veh-toggle-summary{font-size:12px;color:var(--t3)}
 .veh-toggle-chevron{color:var(--t3);font-size:18px;transition:transform .2s}
 .veh-panel.open .veh-toggle-chevron{transform:rotate(180deg)}
-.veh-body{display:none;padding:0 12px 12px;gap:10px;display:none}
-.veh-panel.open .veh-body{display:flex;flex-direction:column;gap:10px}
+.veh-body{display:none;padding:0 12px 12px;flex-direction:column;gap:10px}
+.veh-panel.open .veh-body{display:flex}
 
 .veh-card{border-radius:var(--r);padding:13px 14px;border:2px solid}
 .veh-card.big  {background:var(--big-bg);border-color:var(--big-lt)}
 .veh-card.small{background:var(--small-bg);border-color:var(--small-lt)}
-
 .veh-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .veh-icon{font-size:22px}
 .veh-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.5px;flex:1}
-.veh-card.big  .veh-name{color:var(--big)}
+.veh-card.big   .veh-name{color:var(--big)}
 .veh-card.small .veh-name{color:var(--small)}
-.veh-cases{
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;
-  padding:4px 12px;border-radius:8px;
-}
+.veh-cases{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;padding:4px 12px;border-radius:8px}
 .veh-card.big   .veh-cases{background:var(--big);color:#fff}
 .veh-card.small .veh-cases{background:var(--small);color:#fff}
 .veh-cases-label{font-size:10px;font-weight:700;display:block;text-align:center;letter-spacing:.5px;opacity:.8;margin-top:1px}
-
 .veh-bills{display:flex;flex-wrap:wrap;gap:6px}
-.veh-bill-chip{
-  padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;
-  border:1.5px solid;display:flex;align-items:center;gap:5px
-}
+.veh-bill-chip{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid;display:flex;align-items:center;gap:5px}
 .veh-card.big   .veh-bill-chip{background:#DBEAFE;border-color:var(--big-lt);color:var(--big)}
 .veh-card.small .veh-bill-chip{background:#EDE9FE;border-color:var(--small-lt);color:var(--small)}
 .veh-empty{font-size:12.5px;color:var(--t3);font-style:italic;padding:4px 0}
-
-.veh-clear-btn{
-  margin-top:10px;padding:9px 14px;width:100%;
-  background:none;border:1.5px solid var(--border);
-  color:var(--t2);font-size:12.5px;font-weight:600;font-family:inherit;
-  border-radius:var(--rs);cursor:pointer;text-align:center
-}
+.veh-clear-btn{margin-top:10px;padding:9px 14px;width:100%;background:none;border:1.5px solid var(--border);color:var(--t2);font-size:12.5px;font-weight:600;font-family:inherit;border-radius:var(--rs);cursor:pointer;text-align:center}
 .veh-clear-btn:active{background:var(--bg)}
 
-/* ─── STATS ───────────────────── */
+/* ─── STATS ───────── */
 .stats-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;display:flex;gap:14px;font-size:12.5px;font-weight:600;overflow-x:auto;scrollbar-width:none}
 .stats-bar::-webkit-scrollbar{display:none}
 .si{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .si.red{color:var(--red)}.si.grn{color:var(--green)}.si.gray{color:var(--t2)}.si.big{color:var(--big)}.si.sml{color:var(--small)}
 
-/* ─── CHIPS ───────────────────── */
-.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-.chips-row::-webkit-scrollbar{display:none}
-.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 12px;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px}
-.chip:active{opacity:.7}
-.chip.active{background:var(--text);color:#fff;border-color:var(--text)}
-.cbadge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:18px;height:18px;padding:0 5px;border-radius:9px;display:flex;align-items:center;justify-content:center}
-.chip.active .cbadge{background:rgba(255,255,255,.3)}
-.cbadge.zero{background:var(--border-strong);color:var(--t3)}
+/* ─── PENDING/COMPLETED TABS ─── */
+.tab-row{background:var(--surface);border-bottom:2px solid var(--border);padding:0 14px;display:flex;gap:0}
+.tab-btn{
+  padding:12px 16px;font-size:14px;font-weight:700;font-family:inherit;
+  background:none;border:none;border-bottom:3px solid transparent;
+  cursor:pointer;color:var(--t3);margin-bottom:-2px;
+  display:flex;align-items:center;gap:8px;transition:color .15s
+}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--text)}
+.tab-badge{
+  font-size:11px;font-weight:800;
+  min-width:20px;height:20px;padding:0 6px;border-radius:10px;
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--border);color:var(--t3)
+}
+.tab-btn.active .tab-badge{background:var(--red);color:#fff}
+.tab-btn.active.no-urgent .tab-badge{background:var(--text);color:#fff}
 
-/* ─── SEARCH ──────────────────── */
+/* ─── SEARCH ──────── */
 .search-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;position:relative}
 .search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
 .search-input{width:100%;padding:11px 14px 11px 38px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;color:var(--text)}
 .search-input:focus{border-color:var(--blue);background:#fff}
 .search-input::placeholder{color:var(--t3)}
 
-/* ─── LIST ────────────────────── */
+/* ─── LIST ────────── */
 .list{padding:12px 11px 90px}
 .sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:6px 3px 8px;display:flex;align-items:center;gap:8px}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
 .sec-label.lred{color:var(--red)}
 .sec-label.lgreen{color:var(--green)}
 
-/* ─── PENDING CARD ────────────── */
+/* ─── PENDING CARD ── */
 .card{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
 .card.urgent{border-left:4px solid var(--red);background:var(--red-bg)}
 
@@ -139,19 +128,12 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .chevron{color:var(--t3);font-size:22px;flex-shrink:0;padding-top:2px;transition:transform .2s}
 .card.open>.card-head .chevron{transform:rotate(180deg)}
 
-/* Party name FIRST — large and bold */
+/* Party name FIRST */
 .party-name{font-size:19px;font-weight:800;color:var(--text);margin-bottom:7px;line-height:1.25;word-break:break-word}
-
-/* Cases — second, prominent */
 .cases-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
-.cases-badge{
-  background:var(--text);color:#fff;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;
-  padding:4px 11px;border-radius:8px;letter-spacing:.3px
-}
+.cases-badge{background:var(--text);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:4px 11px;border-radius:8px;letter-spacing:.3px}
 .urgent-tag{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px}
 
-/* Bill info row */
 .bill-info-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .co-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid;white-space:nowrap}
 .co-SNT    {background:#FFFBEB;color:#92400E;border-color:#FCD34D}
@@ -163,7 +145,7 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .ic{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--t2);font-weight:500;display:inline-flex;align-items:center;gap:3px}
 .ic.blue{background:var(--blue-bg);border-color:#BFDBFE;color:#1E40AF;font-weight:700}
 
-/* ─── CARD BODY ───────────────── */
+/* ─── CARD BODY ───── */
 .card-body{display:none;padding:14px 13px 15px;border-top:1.5px solid var(--border)}
 .card.open .card-body{display:block}
 .field-lbl{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
@@ -172,30 +154,19 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .t-warn{display:none;font-size:12px;font-weight:600;color:var(--amber);margin-top:6px;padding:7px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber)}
 .t-warn.show{display:block}
 
-/* Vehicle picker */
+/* Vehicle picker inside card */
 .veh-pick{display:flex;gap:9px;margin-top:12px}
-.veh-pick-btn{
-  flex:1;padding:12px 8px;border-radius:var(--rs);
-  font-size:14px;font-weight:700;font-family:inherit;
-  border:2px solid var(--border);background:var(--bg);
-  color:var(--t2);cursor:pointer;text-align:center;
-  transition:all .15s;line-height:1.3
-}
-.veh-pick-btn .veh-pick-sub{display:block;font-size:10px;font-weight:500;margin-top:2px;color:var(--t3)}
-.veh-pick-btn.sel-big{background:var(--big-bg);border-color:var(--big);color:var(--big)}
-.veh-pick-btn.sel-big .veh-pick-sub{color:var(--big);opacity:.7}
+.veh-pick-btn{flex:1;padding:12px 8px;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;border:2px solid var(--border);background:var(--bg);color:var(--t2);cursor:pointer;text-align:center;transition:all .15s;line-height:1.3}
+.veh-pick-btn .sub{display:block;font-size:10px;font-weight:500;margin-top:2px;color:var(--t3)}
+.veh-pick-btn.sel-big  {background:var(--big-bg);border-color:var(--big);color:var(--big)}
 .veh-pick-btn.sel-small{background:var(--small-bg);border-color:var(--small);color:var(--small)}
-.veh-pick-btn.sel-small .veh-pick-sub{color:var(--small);opacity:.7}
-.veh-pick-btn.sel-none{background:var(--bg);border-color:var(--border-strong);color:var(--t2)}
+.veh-pick-btn.sel-none {background:var(--bg);border-color:var(--border-strong);color:var(--t2)}
 
 .disp-btn{width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 14px rgba(21,128,61,.25)}
 .disp-btn:active{opacity:.85}
 
-/* ─── DONE CARD ───────────────── */
-.done-card{
-  background:var(--green-bg);border:1.5px solid var(--green-lt);
-  border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)
-}
+/* ─── DONE CARD ───── */
+.done-card{background:var(--green-bg);border:1.5px solid var(--green-lt);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
 .done-card.highlight{animation:pulse-g 1.2s ease-out}
 @keyframes pulse-g{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}60%{box-shadow:0 0 0 8px rgba(21,128,61,0)}100%{box-shadow:var(--s1)}}
 
@@ -208,18 +179,15 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .veh-tag-big  {background:var(--big-bg);border:1.5px solid var(--big-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--big);font-weight:700}
 .veh-tag-small{background:var(--small-bg);border:1.5px solid var(--small-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--small);font-weight:700}
 .done-row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.done-co{font-size:11px;font-weight:700;padding:3px 7px;border-radius:5px;border:1.5px solid}
-.done-bill{font-size:11px;color:var(--t3);font-family:'Barlow Condensed',monospace;font-weight:600}
 .was-chip{background:var(--amber-bg);border:1.5px solid var(--amber-lt);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--amber);font-weight:600}
 
-/* Undo — full width, unmissable */
+/* Undo button — full width, always visible */
 .undo-btn{
   display:flex;align-items:center;gap:10px;
   width:calc(100% - 26px);margin:0 13px 13px;
-  padding:14px 14px;
-  background:#FEF3C7;border:2px solid #FCD34D;
-  border-radius:var(--rs);cursor:pointer;font-family:inherit;
-  color:#78350F;transition:background .15s
+  padding:14px;background:#FEF3C7;border:2px solid #FCD34D;
+  border-radius:var(--rs);cursor:pointer;font-family:inherit;color:#78350F;
+  transition:background .15s
 }
 .undo-btn:active{background:#FDE68A}
 .undo-btn.disabled{opacity:.4;pointer-events:none}
@@ -227,15 +195,14 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .undo-text{flex:1;text-align:left}
 .undo-label{font-size:14px;font-weight:800;display:block}
 .undo-sub{font-size:11px;font-weight:500;color:#92400E;display:block;margin-top:1px}
-.undo-timer{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;white-space:nowrap}
 
-/* ─── EMPTY ───────────────────── */
+/* ─── EMPTY ───────── */
 .empty{text-align:center;padding:60px 20px 40px}
 .empty-icon{font-size:52px;margin-bottom:14px}
 .empty-title{font-size:18px;font-weight:700;color:var(--t2);margin-bottom:6px}
 .empty-sub{font-size:14px;color:var(--t3)}
 
-/* ─── TOAST ───────────────────── */
+/* ─── TOAST ───────── */
 .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:24px;font-weight:700;font-size:13.5px;z-index:999;box-shadow:0 4px 14px rgba(0,0,0,.15);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;max-width:92vw}
 .toast.show{opacity:1}
 .toast.ok  {background:#052E16;color:#D1FAE5}
@@ -267,8 +234,6 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
     <span class="veh-toggle-chevron">⌄</span>
   </button>
   <div class="veh-body" id="vehBody">
-
-    <!-- BIG -->
     <div class="veh-card big">
       <div class="veh-header">
         <span class="veh-icon">🚛</span>
@@ -278,12 +243,8 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
           <div class="veh-cases-label">CASES</div>
         </div>
       </div>
-      <div class="veh-bills" id="bigBills">
-        <span class="veh-empty">Nothing loaded yet</span>
-      </div>
+      <div class="veh-bills" id="bigBills"><span class="veh-empty">Nothing loaded yet</span></div>
     </div>
-
-    <!-- SMALL -->
     <div class="veh-card small">
       <div class="veh-header">
         <span class="veh-icon">🚐</span>
@@ -293,11 +254,8 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
           <div class="veh-cases-label">CASES</div>
         </div>
       </div>
-      <div class="veh-bills" id="smallBills">
-        <span class="veh-empty">Nothing loaded yet</span>
-      </div>
+      <div class="veh-bills" id="smallBills"><span class="veh-empty">Nothing loaded yet</span></div>
     </div>
-
     <button class="veh-clear-btn" onclick="clearVehicles()">🗑 Clear all vehicle assignments for today</button>
   </div>
 </div>
@@ -307,14 +265,14 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
   <span class="si gray">Loading…</span>
 </div>
 
-<!-- COMPANY CHIPS -->
-<div class="chips-row">
-  <button class="chip active" data-co="ALL"      onclick="setFilter('ALL')">All <span class="cbadge" id="cnt-ALL">–</span></button>
-  <button class="chip"        data-co="SNT"      onclick="setFilter('SNT')">SNT <span class="cbadge zero" id="cnt-SNT">0</span></button>
-  <button class="chip"        data-co="Maa Rani" onclick="setFilter('Maa Rani')">Maa Rani <span class="cbadge zero" id="cnt-MaaRani">0</span></button>
-  <button class="chip"        data-co="Lupin"    onclick="setFilter('Lupin')">Lupin <span class="cbadge zero" id="cnt-Lupin">0</span></button>
-  <button class="chip"        data-co="Sun"      onclick="setFilter('Sun')">Sun <span class="cbadge zero" id="cnt-Sun">0</span></button>
-  <button class="chip"        data-co="Torque"   onclick="setFilter('Torque')">Torque <span class="cbadge zero" id="cnt-Torque">0</span></button>
+<!-- TABS: PENDING / COMPLETED -->
+<div class="tab-row">
+  <button class="tab-btn active" id="tabPending" onclick="setTab('pending')">
+    Pending <span class="tab-badge" id="cntPending">0</span>
+  </button>
+  <button class="tab-btn" id="tabDone" onclick="setTab('done')">
+    Completed <span class="tab-badge" id="cntDone">0</span>
+  </button>
 </div>
 
 <!-- SEARCH -->
@@ -336,37 +294,34 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 <div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  CONFIG
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydYyG2SwhfYqNhCeq7U2jr6e2nxZ5sOYbwsFVmDtveg5IR76xV2offPqiAxiiDCr7l/exec';
-const COMPANIES  = ['SNT','Maa Rani','Lupin','Sun','Torque'];
-const ONE_HOUR   = 3600000;
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════════
-let records    = [];
+// ═══════════════════════════════════════════════════
+let records    = [];   // All rows from server
 let transports = [];
-let filter     = 'ALL';
+let activeTab  = 'pending';   // 'pending' | 'done'
 let search     = '';
 let openId     = null;
-let saving     = {};
+let saving     = {};   // id → true while API call in flight
 let lastDispId = null;
+let todayCount = 0;
 
-// Vehicle assignments: { id → { vehicle:'big'|'small'|null, party, cases, billNo } }
-// Stored in localStorage, keyed by today's date to auto-reset each day
-let vehMap = {};    // id → 'big' | 'small' | null
+// Vehicle assignments stored in localStorage, auto-clear each day
+let vehMap = {};
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  STARTUP
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 window.onload = () => {
   loadVehMap();
   startClock();
   loadData();
   setInterval(() => { if (!Object.keys(saving).length) loadData(); }, 60000);
-  setInterval(tickCountdowns, 30000);
 };
 
 function startClock() {
@@ -375,54 +330,33 @@ function startClock() {
   t(); setInterval(t, 10000);
 }
 
-// ═══════════════════════════════════════════════════════
-//  VEHICLE MAP — localStorage, auto-clears daily
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  VEHICLE MAP  — localStorage, auto-clears daily
+// ═══════════════════════════════════════════════════
 function todayKey() {
   const d = new Date();
   return 'veh_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
 }
 function loadVehMap() {
-  // Clear yesterday's data automatically
-  const keys = Object.keys(localStorage).filter(k => k.startsWith('veh_'));
-  keys.forEach(k => { if (k !== todayKey()) localStorage.removeItem(k); });
+  Object.keys(localStorage).filter(k => k.startsWith('veh_') && k !== todayKey())
+    .forEach(k => localStorage.removeItem(k));
   const raw = localStorage.getItem(todayKey());
   vehMap = raw ? JSON.parse(raw) : {};
 }
-function saveVehMap() {
-  localStorage.setItem(todayKey(), JSON.stringify(vehMap));
-}
-function setVehicle(id, veh) {
-  if (veh === null) delete vehMap[id];
-  else vehMap[id] = veh;
-  saveVehMap();
-  updateVehPanel();
-  updateStats(Date.now());
-}
+function saveVehMap() { localStorage.setItem(todayKey(), JSON.stringify(vehMap)); }
 function clearVehicles() {
   if (!confirm('Clear all vehicle assignments for today?')) return;
-  vehMap = {};
-  saveVehMap();
-  updateVehPanel();
-  updateStats(Date.now());
+  vehMap = {}; saveVehMap();
+  updateVehPanel(); updateStats();
   toast('Vehicle assignments cleared','ok');
 }
-
-function toggleVehPanel() {
-  document.getElementById('vehPanel').classList.toggle('open');
-}
+function toggleVehPanel() { document.getElementById('vehPanel').classList.toggle('open'); }
 
 function updateVehPanel() {
   const bigIds   = Object.keys(vehMap).filter(id => vehMap[id]==='big');
   const smallIds = Object.keys(vehMap).filter(id => vehMap[id]==='small');
-
-  // Helper: find record by id
-  const byId = (id) => records.find(r => r.id === id);
-
-  const sumCases = (ids) => ids.reduce((s, id) => {
-    const r = byId(id);
-    return s + (r ? (parseInt(r.cases)||0) : 0);
-  }, 0);
+  const byId = id => records.find(r => r.id===id);
+  const sumCases = ids => ids.reduce((s,id)=>{const r=byId(id);return s+(r?parseInt(r.cases)||0:0);},0);
 
   const bigCases   = sumCases(bigIds);
   const smallCases = sumCases(smallIds);
@@ -430,48 +364,38 @@ function updateVehPanel() {
   document.getElementById('bigCases').textContent   = bigCases;
   document.getElementById('smallCases').textContent = smallCases;
 
-  // Bill chips
   const renderChips = (ids, container) => {
-    if (!ids.length) {
-      container.innerHTML = '<span class="veh-empty">Nothing loaded yet</span>';
-      return;
-    }
+    if (!ids.length) { container.innerHTML='<span class="veh-empty">Nothing loaded yet</span>'; return; }
     container.innerHTML = ids.map(id => {
       const r = byId(id);
-      const party = r ? r.party : id;
-      const cases = r ? (r.cases||'?') : '?';
-      return `<span class="veh-bill-chip">
-        <span>${esc(truncate(party,18))}</span>
-        <span style="opacity:.7;font-size:10px">${cases}c</span>
-      </span>`;
+      const nm = r ? truncate(r.party, 18) : id;
+      const cs = r ? (r.cases||'?') : '?';
+      return `<span class="veh-bill-chip"><span>${esc(nm)}</span><span style="opacity:.7;font-size:10px">${cs}c</span></span>`;
     }).join('');
   };
-
   renderChips(bigIds,   document.getElementById('bigBills'));
   renderChips(smallIds, document.getElementById('smallBills'));
 
-  // Summary line
   const total = bigIds.length + smallIds.length;
-  const summaryEl = document.getElementById('vehSummary');
-  if (!total) {
-    summaryEl.textContent = 'No vehicles loaded yet';
-  } else {
-    summaryEl.textContent =
-      `Big: ${bigCases} cases · Small: ${smallCases} cases`;
-  }
+  document.getElementById('vehSummary').textContent = total
+    ? `Big: ${bigCases} cases · Small: ${smallCases} cases`
+    : 'No vehicles loaded yet';
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  LOAD
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 async function loadData() {
   setBanner('load','Refreshing…'); spin(true);
   try {
-    const reqs = [apiFetch(SCRIPT_URL+'?action=load')];
-    if (!transports.length) reqs.push(apiFetch(SCRIPT_URL+'?action=getTransports'));
+    const reqs = [
+      apiFetch(SCRIPT_URL+'?action=load'),
+      apiFetch(SCRIPT_URL+'?action=getTransports')
+    ];
     const [main, tr] = await Promise.all(reqs);
     if (!main.ok) throw new Error(main.error||'Load failed');
 
+    // Preserve optimistic records for in-flight saves
     const inFlight = new Set(Object.keys(saving));
     if (!inFlight.size) {
       records = main.records || [];
@@ -481,6 +405,13 @@ async function loadData() {
     }
 
     if (tr && tr.ok) transports = tr.transports || [];
+    if (main.todayCount !== undefined) todayCount = main.todayCount;
+
+    // Sync vehicle map: if row was removed by admin, clean up vehMap
+    const allIds = new Set(records.map(r => r.id));
+    Object.keys(vehMap).forEach(id => { if (!allIds.has(id)) delete vehMap[id]; });
+    saveVehMap();
+
     setBanner('ok','Connected · just now');
     updateVehPanel();
     render();
@@ -491,16 +422,17 @@ async function loadData() {
   } finally { spin(false); }
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  RENDER
-//  Order: ✓ Dispatched → 🔴 Urgent → Pending
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function render() {
-  const now = Date.now();
-  let vis = filter==='ALL' ? records : records.filter(r => r.company===filter);
+  updateTabCounts();
+  updateStats();
+
+  let vis = records;
   if (search) {
     const q = search.toLowerCase();
-    vis = vis.filter(r =>
+    vis = records.filter(r =>
       r.party.toLowerCase().includes(q)                    ||
       r.billNo.toLowerCase().includes(q)                   ||
       (r.suggestedTransport||'').toLowerCase().includes(q) ||
@@ -509,30 +441,36 @@ function render() {
     );
   }
 
-  const done  = vis.filter(r => r.status==='dispatched' && (now-r.dispatchedAt)<ONE_HOUR)
-                   .sort((a,b) => b.dispatchedAt - a.dispatchedAt);
-  const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
-  const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
-
-  updateChips(); updateStats(now);
-
   let html = '';
-  if (!done.length && !urgP.length && !normP.length) {
-    html = search
-      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(search)}</b>"</div></div>`
-      : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No pending dispatches</div></div>`;
+
+  if (activeTab === 'pending') {
+    const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
+    const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
+
+    if (!urgP.length && !normP.length) {
+      html = search
+        ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(search)}</b>"</div></div>`
+        : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No pending dispatches</div></div>`;
+    } else {
+      if (urgP.length) {
+        html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`;
+        urgP.forEach(r => html += pendingCard(r));
+      }
+      if (normP.length) {
+        html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`;
+        normP.forEach(r => html += pendingCard(r));
+      }
+    }
   } else {
-    if (done.length) {
-      html += `<div class="sec-label lgreen">✓ DISPATCHED · undo available &nbsp;${done.length}</div>`;
-      done.forEach(r => html += doneCard(r, now));
-    }
-    if (urgP.length) {
-      html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`;
-      urgP.forEach(r => html += pendingCard(r));
-    }
-    if (normP.length) {
-      html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`;
-      normP.forEach(r => html += pendingCard(r));
+    // COMPLETED tab — all dispatched rows still in sheet, undo available
+    const done = vis.filter(r => r.status==='dispatched')
+                    .sort((a,b) => b.dispatchTime > a.dispatchTime ? 1 : -1);
+
+    if (!done.length) {
+      html = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No dispatches yet</div><div class="empty-sub">Dispatched bills will appear here</div></div>`;
+    } else {
+      html += `<div class="sec-label lgreen">✓ DISPATCHED &nbsp;${done.length} &nbsp;· tap ↩ to undo</div>`;
+      done.forEach(r => html += doneCard(r));
     }
   }
 
@@ -542,21 +480,18 @@ function render() {
     const el = document.querySelector(`[data-id="${CSS.escape(openId)}"]`);
     if (el) {
       el.classList.add('open');
-      // Restore vehicle picker selection
-      const veh = vehMap[openId] || 'none';
-      syncVehPicker(openId, veh);
+      syncVehPicker(openId, vehMap[openId] || 'none');
     }
   }
-
   if (lastDispId) {
     const el = document.querySelector(`[data-id="${CSS.escape(lastDispId)}"]`);
     if (el) { el.classList.add('highlight'); lastDispId = null; }
   }
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  PENDING CARD
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function pendingCard(r) {
   const co   = r.company.replace(/\s+/g,'');
   const opts = buildOpts(r.suggestedTransport);
@@ -589,20 +524,14 @@ function pendingCard(r) {
 
     <div class="field-lbl" style="margin-top:14px">Load into vehicle</div>
     <div class="veh-pick" id="vp-${esc(r.id)}">
-      <button class="veh-pick-btn sel-none" data-veh="none"
-        onclick="pickVeh(event,'${esc(r.id)}','none')">
-        — None
-        <span class="veh-pick-sub">Skip vehicle</span>
+      <button class="veh-pick-btn sel-none" data-veh="none" onclick="pickVeh(event,'${esc(r.id)}','none')">
+        — None<span class="sub">skip vehicle</span>
       </button>
-      <button class="veh-pick-btn" data-veh="big"
-        onclick="pickVeh(event,'${esc(r.id)}','big')">
-        🚛 Big
-        <span class="veh-pick-sub" id="vps-big-${esc(r.id)}">${vehCaseLabel('big')}</span>
+      <button class="veh-pick-btn" data-veh="big" onclick="pickVeh(event,'${esc(r.id)}','big')">
+        🚛 Big<span class="sub" id="vps-big-${esc(r.id)}">${vehCaseLabel('big')}</span>
       </button>
-      <button class="veh-pick-btn" data-veh="small"
-        onclick="pickVeh(event,'${esc(r.id)}','small')">
-        🚐 Small
-        <span class="veh-pick-sub" id="vps-small-${esc(r.id)}">${vehCaseLabel('small')}</span>
+      <button class="veh-pick-btn" data-veh="small" onclick="pickVeh(event,'${esc(r.id)}','small')">
+        🚐 Small<span class="sub" id="vps-small-${esc(r.id)}">${vehCaseLabel('small')}</span>
       </button>
     </div>
 
@@ -613,47 +542,14 @@ function pendingCard(r) {
 </div>`;
 }
 
-function vehCaseLabel(veh) {
-  const ids   = Object.keys(vehMap).filter(id => vehMap[id]===veh);
-  const cases = ids.reduce((s,id) => { const r=records.find(x=>x.id===id); return s+(r?parseInt(r.cases)||0:0); }, 0);
-  const n     = ids.length;
-  return n ? `${n} bill${n>1?'s':''} · ${cases}c` : 'empty';
-}
-
-function pickVeh(e, id, veh) {
-  e.stopPropagation();
-  // Toggle: clicking active choice removes it
-  const current = vehMap[id] || 'none';
-  const newVeh  = (current === veh) ? 'none' : veh;
-  if (newVeh === 'none') delete vehMap[id];
-  else vehMap[id] = newVeh;
-  syncVehPicker(id, newVeh);
-  // Update sub-labels live
-  ['big','small'].forEach(v => {
-    const lbl = document.getElementById('vps-'+v+'-'+id);
-    if (lbl) lbl.textContent = vehCaseLabel(v);
-  });
-}
-
-function syncVehPicker(id, veh) {
-  const wrap = document.getElementById('vp-'+id);
-  if (!wrap) return;
-  wrap.querySelectorAll('.veh-pick-btn').forEach(btn => {
-    const bv = btn.dataset.veh;
-    btn.className = 'veh-pick-btn ' + (bv===veh||(!veh&&bv==='none') ? ('sel-'+bv) : '');
-    if (bv==='none' && veh==='none') btn.className='veh-pick-btn sel-none';
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-//  DONE CARD
-// ═══════════════════════════════════════════════════════
-function doneCard(r, now) {
-  const co       = r.company.replace(/\s+/g,'');
-  const minsLeft = Math.max(0, Math.floor((r.dispatchedAt+ONE_HOUR-now)/60000));
-  const changed  = r.actualTransport && r.actualTransport !== r.suggestedTransport;
-  const isSv     = !!saving[r.id];
-  const veh      = vehMap[r.id] || null;
+// ═══════════════════════════════════════════════════
+//  DONE CARD — undo is unlimited while row is in sheet
+// ═══════════════════════════════════════════════════
+function doneCard(r) {
+  const co      = r.company.replace(/\s+/g,'');
+  const changed = r.actualTransport && r.actualTransport !== r.suggestedTransport;
+  const isSv    = !!saving[r.id];
+  const veh     = vehMap[r.id] || r.car || null;
 
   return `
 <div class="done-card" data-id="${esc(r.id)}">
@@ -668,8 +564,8 @@ function doneCard(r, now) {
       ${changed ? `<span class="was-chip">was: ${esc(r.suggestedTransport)}</span>` : ''}
     </div>
     <div class="done-row2">
-      <span class="done-co co-badge co-${co}">${esc(r.company)}</span>
-      <span class="done-bill">#${esc(r.billNo)}</span>
+      <span class="co-badge co-${co}">${esc(r.company)}</span>
+      <span style="font-size:11px;color:var(--t3);font-family:'Barlow Condensed',monospace;font-weight:600">#${esc(r.billNo)}</span>
       ${r.city?`<span class="ic" style="font-size:11px">📍 ${esc(r.city)}</span>`:''}
     </div>
   </div>
@@ -678,16 +574,15 @@ function doneCard(r, now) {
     <span class="undo-icon">↩</span>
     <span class="undo-text">
       <span class="undo-label">Undo Dispatch</span>
-      <span class="undo-sub">Move back to pending · change transport or vehicle</span>
+      <span class="undo-sub">Move back to Pending · change transport or vehicle</span>
     </span>
-    <span class="undo-timer" id="uc-${esc(r.id)}">${minsLeft}m left</span>
   </button>
 </div>`;
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  DISPATCH — optimistic
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function doDispatch(e, id, company, billNo) {
   e.stopPropagation();
   if (saving[id]) return;
@@ -700,46 +595,45 @@ function doDispatch(e, id, company, billNo) {
   if (!rec) return;
   const snap = { ...rec };
 
-  // Persist vehicle assignment
-  const currentVeh = vehMap[id] || null;
-  if (currentVeh) saveVehMap();
+  const veh = vehMap[id] || null;
+  if (veh) saveVehMap();
 
   const now = new Date();
   rec.status          = 'dispatched';
   rec.actualTransport = transport;
   rec.dispatchTime    = pad(now.getHours())+':'+pad(now.getMinutes());
-  rec.dispatchedAt    = now.getTime();
+  rec.dispatchDate    = fmtTodayDMY();
+  rec.car             = veh;
   openId = null;
   lastDispId = id;
   saving[id] = true;
   render();
-  updateVehPanel();
-  // Scroll to top to show undo button immediately
-  window.scrollTo({top:0, behavior:'smooth'});
 
   const url = `${SCRIPT_URL}?action=dispatch`
     + `&company=${encodeURIComponent(company)}`
     + `&billNo=${encodeURIComponent(billNo)}`
-    + `&transport=${encodeURIComponent(transport)}`;
+    + `&transport=${encodeURIComponent(transport)}`
+    + `&car=${encodeURIComponent(veh||'')}`;
 
   apiFetch(url).then(data => {
     delete saving[id];
-    if (!data.ok) { Object.assign(rec, snap); render(); toast('Save failed: '+(data.error||'error'),'err'); return; }
+    if (!data.ok) { Object.assign(rec, snap); render(); toast('Save failed: '+(data.error||'err'),'err'); return; }
     if (data.dispatchTime) rec.dispatchTime = data.dispatchTime;
-    if (data.dispatchedAt) rec.dispatchedAt = data.dispatchedAt;
     render();
+    updateVehPanel();
     toast('✓ '+billNo+' dispatched · '+rec.dispatchTime,'ok');
   }).catch(() => {
     delete saving[id];
     Object.assign(rec, snap);
+    setTab('pending', false);
     render();
     toast('Network error — try again','err');
   });
 }
 
-// ═══════════════════════════════════════════════════════
-//  UNDO — optimistic, also removes vehicle assignment
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  UNDO — no time restriction; row must still be in sheet
+// ═══════════════════════════════════════════════════
 function doUndo(e, id, company, billNo) {
   e.stopPropagation();
   if (saving[id]) return;
@@ -748,19 +642,17 @@ function doUndo(e, id, company, billNo) {
   if (!rec) return;
   const snap = { ...rec };
 
-  rec.status='pending'; rec.actualTransport=null; rec.dispatchTime=null; rec.dispatchedAt=null;
+  rec.status='pending'; rec.actualTransport=null; rec.dispatchTime=null; rec.dispatchDate=null; rec.car=null;
+  delete vehMap[id]; saveVehMap();
   saving[id] = true;
 
-  // Remove vehicle assignment on undo
-  delete vehMap[id];
-  saveVehMap();
-
+  setTab('pending', false);
   render(); updateVehPanel();
 
   const url = `${SCRIPT_URL}?action=undo&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}`;
   apiFetch(url).then(data => {
     delete saving[id];
-    if (!data.ok) { Object.assign(rec, snap); render(); toast('Undo failed: '+(data.error||'error'),'err'); return; }
+    if (!data.ok) { Object.assign(rec, snap); render(); toast('Undo failed: '+(data.error||'err'),'err'); return; }
     render();
     toast('↩ '+billNo+' back to pending','ok');
   }).catch(() => {
@@ -771,9 +663,70 @@ function doUndo(e, id, company, billNo) {
   });
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+//  VEHICLE PICKER
+// ═══════════════════════════════════════════════════
+function vehCaseLabel(veh) {
+  const ids   = Object.keys(vehMap).filter(id => vehMap[id]===veh);
+  const cases = ids.reduce((s,id)=>{const r=records.find(x=>x.id===id);return s+(r?parseInt(r.cases)||0:0);},0);
+  const n     = ids.length;
+  return n ? `${n} bill${n>1?'s':''} · ${cases}c` : 'empty';
+}
+function pickVeh(e, id, veh) {
+  e.stopPropagation();
+  const current = vehMap[id] || 'none';
+  if (current === veh || (veh==='none' && !vehMap[id])) {
+    delete vehMap[id];
+    syncVehPicker(id, 'none');
+  } else {
+    if (veh === 'none') delete vehMap[id]; else vehMap[id] = veh;
+    syncVehPicker(id, veh==='none'?'none':veh);
+  }
+  ['big','small'].forEach(v => {
+    const lbl = document.getElementById('vps-'+v+'-'+id);
+    if (lbl) lbl.textContent = vehCaseLabel(v);
+  });
+}
+function syncVehPicker(id, veh) {
+  const wrap = document.getElementById('vp-'+id);
+  if (!wrap) return;
+  wrap.querySelectorAll('.veh-pick-btn').forEach(btn => {
+    const bv = btn.dataset.veh;
+    const selected = (bv===veh) || (bv==='none' && veh==='none');
+    btn.className = 'veh-pick-btn' + (selected ? ' sel-'+bv : '');
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════
+function setTab(tab, doRender=true) {
+  activeTab = tab;
+  document.getElementById('tabPending').classList.toggle('active', tab==='pending');
+  document.getElementById('tabDone').classList.toggle('active', tab==='done');
+  if (doRender) render();
+}
+
+function updateTabCounts() {
+  const pend  = records.filter(r => r.status==='pending').length;
+  const done  = records.filter(r => r.status==='dispatched').length;
+  const urg   = records.filter(r => r.status==='pending' && r.urgent).length;
+
+  const pendEl = document.getElementById('cntPending');
+  const doneEl = document.getElementById('cntDone');
+  const tabP   = document.getElementById('tabPending');
+  const tabD   = document.getElementById('tabDone');
+
+  pendEl.textContent = pend || '0';
+  doneEl.textContent = done || '0';
+
+  // Red badge if urgent, else normal
+  tabP.classList.toggle('no-urgent', !urg);
+}
+
+// ═══════════════════════════════════════════════════
 //  CARD TOGGLE
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function toggleCard(id) {
   if (openId===id) {
     openId=null;
@@ -783,86 +736,55 @@ function toggleCard(id) {
     openId=id;
     const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
     el?.classList.add('open');
-    // Restore saved vehicle pick
-    const veh = vehMap[id] || 'none';
-    syncVehPicker(id, veh);
-    setTimeout(() => el?.scrollIntoView({behavior:'smooth',block:'nearest'}), 60);
+    syncVehPicker(id, vehMap[id]||'none');
+    setTimeout(()=>el?.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   }
 }
-
 function onTrChange(id, suggested) {
   const s=document.getElementById('ts-'+id), w=document.getElementById('tw-'+id);
   if(s&&w) w.classList.toggle('show', !!suggested && s.value!==suggested);
 }
 
-// ═══════════════════════════════════════════════════════
-//  FILTER & SEARCH
-// ═══════════════════════════════════════════════════════
-function setFilter(co) {
-  filter=co;
-  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.co===co));
-  render();
-}
+// ═══════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════
 function onSearch() { search=document.getElementById('searchInput').value.trim(); render(); }
 
-// ═══════════════════════════════════════════════════════
-//  COUNTDOWNS
-// ═══════════════════════════════════════════════════════
-function tickCountdowns() {
-  const now = Date.now();
-  const before = records.filter(r=>r.status==='dispatched').length;
-  records = records.filter(r => r.status!=='dispatched' || (now-r.dispatchedAt)<ONE_HOUR);
-  records.filter(r=>r.status==='dispatched').forEach(r => {
-    const el=document.getElementById('uc-'+r.id);
-    if(el) el.textContent=Math.max(0,Math.floor((r.dispatchedAt+ONE_HOUR-now)/60000))+'m left';
-  });
-  if(records.filter(r=>r.status==='dispatched').length !== before) render();
-}
-
-// ═══════════════════════════════════════════════════════
-//  CHIPS & STATS
-// ═══════════════════════════════════════════════════════
-function updateChips() {
-  const allP = records.filter(r=>r.status==='pending').length;
-  setCount('ALL', allP);
-  COMPANIES.forEach(co => setCount(co, records.filter(r=>r.company===co&&r.status==='pending').length));
-}
-function setCount(co,n) {
-  const el=document.getElementById('cnt-'+co.replace(/\s+/g,''));
-  if(!el) return; el.textContent=n||''; el.classList.toggle('zero',n===0);
-}
-function updateStats(now) {
+// ═══════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════
+function updateStats() {
   const urg  = records.filter(r=>r.status==='pending'&&r.urgent).length;
   const pend = records.filter(r=>r.status==='pending').length;
-  const win  = records.filter(r=>r.status==='dispatched'&&(now-r.dispatchedAt)<ONE_HOUR).length;
+  const done = records.filter(r=>r.status==='dispatched').length;
   const bigC = Object.keys(vehMap).filter(id=>vehMap[id]==='big').reduce((s,id)=>{const r=records.find(x=>x.id===id);return s+(r?parseInt(r.cases)||0:0);},0);
   const smlC = Object.keys(vehMap).filter(id=>vehMap[id]==='small').reduce((s,id)=>{const r=records.find(x=>x.id===id);return s+(r?parseInt(r.cases)||0:0);},0);
   document.getElementById('statsBar').innerHTML =
     `${urg?`<span class="si red">🔴 ${urg} urgent</span>`:''}
      <span class="si gray">⏳ ${pend} pending</span>
-     <span class="si grn">✓ ${win} dispatched</span>
-     ${bigC?`<span class="si big">🚛 Big: ${bigC}c</span>`:''}
-     ${smlC?`<span class="si sml">🚐 Small: ${smlC}c</span>`:''}`;
+     <span class="si grn">✓ ${done} dispatched</span>
+     <span class="si gray">📦 ${todayCount} today total</span>
+     ${bigC?`<span class="si big">🚛 Big:${bigC}c</span>`:''}
+     ${smlC?`<span class="si sml">🚐 Small:${smlC}c</span>`:''}`;
 }
 
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
 function buildOpts(suggested) {
   const list=[...transports];
   if(suggested&&!list.includes(suggested)) list.unshift(suggested);
   if(!list.length) return `<option value="${esc(suggested||'')}">${esc(suggested||'(No transports)')}</option>`;
   return list.map(t=>`<option value="${esc(t)}"${t===suggested?' selected':''}>${esc(t)}</option>`).join('');
 }
-
 async function apiFetch(url) {
   const r=await fetch(url,{redirect:'follow'});
   if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
-
 function byDate(a,b){return parseDMY(a.billDate)-parseDMY(b.billDate)}
 function parseDMY(s){if(!s)return 0;const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d).getTime()||0}
+function fmtTodayDMY(){const n=new Date();return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()}
 function pad(n){return String(n).padStart(2,'0')}
 function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
