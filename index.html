@@ -612,10 +612,10 @@ function doDispatch(e, id, company, billNo) {
   if (!rec) return;
   const snap = { ...rec };
 
-  const now = new Date();
+  // Optimistic UI — NO device time shown. Time comes from server only.
   rec.status          = 'dispatched';
   rec.actualTransport = transport;
-  rec.dispatchTime    = pad(now.getHours())+':'+pad(now.getMinutes());
+  rec.dispatchTime    = '…';   // placeholder — replaced by server time on response
   rec.dispatchDate    = fmtTodayDMY();
   rec.car             = veh;
   rec.area            = area;
