@@ -41,14 +41,10 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ─── BANNER ──────── */
-.banner{padding:8px 14px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px;min-height:36px;border-bottom:1px solid transparent}
-.banner .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.b-ok  {background:var(--green-bg);color:#166534;border-color:var(--green-lt)}
-.b-ok .dot{background:var(--green)}
-.b-err {background:var(--red-bg);color:#991B1B;border-color:var(--red-lt)}
-.b-err .dot{background:var(--red)}
-.b-load{background:var(--amber-bg);color:#854D0E;border-color:var(--amber-lt)}
-.b-load .dot{background:var(--amber);animation:blink 1s ease-in-out infinite}
+/* status dot in app bar */
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--amber);transition:background .3s}
+.status-dot.ok {background:var(--green)}
+.status-dot.err{background:var(--red)}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
 /* ─── VEHICLE PANEL ── */
@@ -101,10 +97,12 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .area-btn.required-err{border-color:var(--red)!important;background:var(--red-bg)!important}
 
 /* ─── STATS ───────── */
-.stats-bar{background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;display:flex;gap:14px;font-size:12.5px;font-weight:600;overflow-x:auto;scrollbar-width:none}
-.stats-bar::-webkit-scrollbar{display:none}
-.si{display:flex;align-items:center;gap:5px;white-space:nowrap}
-.si.red{color:var(--red)}.si.grn{color:var(--green)}.si.gray{color:var(--t2)}.si.big{color:var(--big)}.si.sml{color:var(--small)}
+/* ─── COMPANY FILTER CHIPS ── */
+.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:9px 12px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
+.chips-row::-webkit-scrollbar{display:none}
+.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 13px;border-radius:20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.chip:active{opacity:.7}
+.chip.active{background:var(--text);color:#fff;border-color:var(--text)}
 
 /* ─── PENDING/COMPLETED TABS ─── */
 .tab-row{background:var(--surface);border-bottom:2px solid var(--border);padding:0 14px;display:flex;gap:0}
@@ -125,9 +123,9 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .tab-btn.active.no-urgent .tab-badge{background:var(--text);color:#fff}
 
 /* ─── SEARCH ──────── */
-.search-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 12px;position:relative}
-.search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;pointer-events:none}
-.search-input{width:100%;padding:11px 14px 11px 38px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;outline:none;color:var(--text)}
+.search-row{background:var(--surface);border-bottom:2px solid var(--border);padding:11px 12px;position:relative}
+.search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:18px;pointer-events:none}
+.search-input{width:100%;padding:14px 14px 14px 44px;font-size:17px;font-family:inherit;background:var(--bg);border:2px solid var(--border-strong);border-radius:10px;outline:none;color:var(--text)}
 .search-input:focus{border-color:var(--blue);background:#fff}
 .search-input::placeholder{color:var(--t3)}
 
@@ -142,16 +140,16 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 .card{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
 .card.urgent{border-left:4px solid var(--red);background:var(--red-bg)}
 
-.card-head{padding:14px 13px 12px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
+.card-head{padding:16px 14px 14px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
 .card-main{flex:1;min-width:0}
-.chevron{color:var(--t3);font-size:22px;flex-shrink:0;padding-top:2px;transition:transform .2s}
+.chevron{color:var(--t3);font-size:24px;flex-shrink:0;padding-top:2px;transition:transform .2s}
 .card.open>.card-head .chevron{transform:rotate(180deg)}
 
-/* Party name FIRST */
-.party-name{font-size:19px;font-weight:800;color:var(--text);margin-bottom:7px;line-height:1.25;word-break:break-word}
-.cases-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
-.cases-badge{background:var(--text);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;padding:4px 11px;border-radius:8px;letter-spacing:.3px}
-.urgent-tag{background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px}
+/* Party name — large and bold, easy to read */
+.party-name{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;line-height:1.2;word-break:break-word}
+.cases-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.cases-badge{background:var(--text);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:5px 13px;border-radius:8px;letter-spacing:.3px}
+.urgent-tag{background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px}
 
 .bill-info-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .co-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid;white-space:nowrap}
@@ -239,15 +237,11 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
 <header class="app-bar">
   <span class="bar-logo">SNT</span>
   <span class="bar-title">Gate Dispatch</span>
+  <span class="status-dot" id="statusDot" title="Connection status"></span>
   <span class="bar-clock" id="clock">--:--</span>
   <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
   <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
 </header>
-
-<!-- BANNER -->
-<div class="banner b-load" id="banner">
-  <span class="dot"></span><span id="bannerTxt">Connecting…</span>
-</div>
 
 <!-- VEHICLE PANEL -->
 <div class="veh-panel" id="vehPanel">
@@ -275,9 +269,14 @@ body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(-
   </div>
 </div>
 
-<!-- STATS BAR -->
-<div class="stats-bar" id="statsBar">
-  <span class="si gray">Loading…</span>
+<!-- COMPANY FILTER CHIPS -->
+<div class="chips-row">
+  <button class="chip active" data-co="ALL"      data-match=""        onclick="setCoFilter('ALL','')">All</button>
+  <button class="chip"        data-co="SNT"      data-match="snt"     onclick="setCoFilter('SNT','snt')">SNT</button>
+  <button class="chip"        data-co="MRS"      data-match="mrs"     onclick="setCoFilter('MRS','mrs')">MRS</button>
+  <button class="chip"        data-co="Lupin"    data-match="lupin"   onclick="setCoFilter('Lupin','lupin')">Lupin</button>
+  <button class="chip"        data-co="Sun"      data-match="sun"     onclick="setCoFilter('Sun','sun')">Sun</button>
+  <button class="chip"        data-co="Torque"   data-match="torque"  onclick="setCoFilter('Torque','torque')">Torque</button>
 </div>
 
 <!-- TABS: PENDING / COMPLETED -->
@@ -333,14 +332,25 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXes0mgiJ1H0YAx1wCo
 // ═══════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════
-let records    = [];   // All rows from server
+let records    = [];
 let transports = [];
-let activeTab  = 'pending';   // 'pending' | 'done'
+let activeTab  = 'pending';
 let search     = '';
+let coFilter   = 'ALL';
+let coMatch    = '';    // keyword to match against company column
 let openId     = null;
-let saving     = {};   // id → true while API call in flight
+let saving     = {};
 let lastDispId = null;
 let todayCount = 0;
+
+function setCoFilter(co, match) {
+  coFilter = co;
+  coMatch  = match || '';
+  document.querySelectorAll('.chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.co === co)
+  );
+  render();
+}
 
 // ═══════════════════════════════════════════════════
 //  STARTUP
@@ -424,12 +434,15 @@ async function loadData() {
 // ═══════════════════════════════════════════════════
 function render() {
   updateTabCounts();
-  updateStats();
 
   let vis = records;
+  if (coFilter !== 'ALL') {
+    const kw = coMatch || coFilter.toLowerCase();
+    vis = records.filter(r => r.company.toLowerCase().includes(kw));
+  }
   if (search) {
     const q = search.toLowerCase();
-    vis = records.filter(r =>
+    vis = vis.filter(r =>
       r.party.toLowerCase().includes(q)                    ||
       r.billNo.toLowerCase().includes(q)                   ||
       (r.suggestedTransport||'').toLowerCase().includes(q) ||
@@ -441,8 +454,8 @@ function render() {
   let html = '';
 
   if (activeTab === 'pending') {
-    const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byDate);
-    const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byDate);
+    const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byName);
+    const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byName);
 
     if (!urgP.length && !normP.length) {
       html = search
@@ -451,11 +464,11 @@ function render() {
     } else {
       if (urgP.length) {
         html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`;
-        urgP.forEach(r => html += pendingCard(r));
+        html += letterGroups(urgP);
       }
       if (normP.length) {
-        html += `<div class="sec-label">PENDING &nbsp;${normP.length}</div>`;
-        normP.forEach(r => html += pendingCard(r));
+        if (urgP.length) html += `<div class="sec-label" style="margin-top:4px">PENDING &nbsp;${normP.length}</div>`;
+        html += letterGroups(normP);
       }
     }
   } else {
@@ -744,20 +757,22 @@ function setTab(tab, doRender=true) {
 }
 
 function updateTabCounts() {
-  const pend  = records.filter(r => r.status==='pending').length;
-  const done  = records.filter(r => r.status==='dispatched').length;
-  const urg   = records.filter(r => r.status==='pending' && r.urgent).length;
+  // Count only within active company filter
+  const filtered = coFilter === 'ALL'
+    ? records
+    : records.filter(r => r.company.toLowerCase().includes(coMatch || coFilter.toLowerCase()));
+
+  const pend = filtered.filter(r => r.status==='pending').length;
+  const done = filtered.filter(r => r.status==='dispatched').length;
+  const urg  = filtered.filter(r => r.status==='pending' && r.urgent).length;
 
   const pendEl = document.getElementById('cntPending');
   const doneEl = document.getElementById('cntDone');
   const tabP   = document.getElementById('tabPending');
-  const tabD   = document.getElementById('tabDone');
 
-  pendEl.textContent = pend || '0';
-  doneEl.textContent = done || '0';
-
-  // Red badge if urgent, else normal
-  tabP.classList.toggle('no-urgent', !urg);
+  if (pendEl) pendEl.textContent = pend || '0';
+  if (doneEl) doneEl.textContent = done || '0';
+  if (tabP)   tabP.classList.toggle('no-urgent', !urg);
 }
 
 // ═══════════════════════════════════════════════════
@@ -788,21 +803,6 @@ function onSearch() { search=document.getElementById('searchInput').value.trim()
 // ═══════════════════════════════════════════════════
 //  STATS
 // ═══════════════════════════════════════════════════
-function updateStats() {
-  const urg  = records.filter(r=>r.status==='pending'&&r.urgent).length;
-  const pend = records.filter(r=>r.status==='pending').length;
-  const done = records.filter(r=>r.status==='dispatched').length;
-  const bigC = records.filter(r=>r.status==='dispatched'&&r.car==='big').reduce((s,r)=>s+(parseInt(r.cases)||0),0);
-  const smlC = records.filter(r=>r.status==='dispatched'&&r.car==='small').reduce((s,r)=>s+(parseInt(r.cases)||0),0);
-  document.getElementById('statsBar').innerHTML =
-    `${urg?`<span class="si red">🔴 ${urg} urgent</span>`:''}
-     <span class="si gray">⏳ ${pend} pending</span>
-     <span class="si grn">✓ ${done} dispatched</span>
-     <span class="si gray">📦 ${todayCount} today</span>
-     ${bigC?`<span class="si big">🚛 Big:${bigC}c</span>`:''}
-     ${smlC?`<span class="si sml">🚐 Small:${smlC}c</span>`:''}`;
-}
-
 // ═══════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════
@@ -817,13 +817,24 @@ async function apiFetch(url) {
     throw new Error('Not JSON — ' + (snippet || 'empty response') + ' [HTTP ' + r.status + ']');
   }
 }
+function byName(a,b){return a.party.localeCompare(b.party,'en',{sensitivity:'base'})}
 function byDate(a,b){return parseDMY(a.billDate)-parseDMY(b.billDate)}
+
+// Groups sorted records — A-Z, no dividers
+function letterGroups(list) {
+  return list.map(r => pendingCard(r)).join('');
+}
 function parseDMY(s){if(!s)return 0;const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d).getTime()||0}
 function fmtTodayDMY(){const n=new Date();return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()}
 function pad(n){return String(n).padStart(2,'0')}
 function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
-function setBanner(state,msg){document.getElementById('banner').className='banner b-'+state;document.getElementById('bannerTxt').textContent=msg}
+function setBanner(state,msg){
+  const dot = document.getElementById('statusDot');
+  if (!dot) return;
+  dot.className = 'status-dot' + (state==='ok' ? ' ok' : state==='err' ? ' err' : '');
+  dot.title = msg;
+}
 function spin(v){document.getElementById('refreshBtn').classList.toggle('spin',v)}
 
 let toastTimer;
