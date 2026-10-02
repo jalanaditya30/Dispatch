@@ -68,7 +68,7 @@ function render() {
     const cases = g.bills.reduce((s, b) => s + (parseInt(b.dispatchCases || b.cases, 10) || 0), 0);
     return `<div class="card"><div class="card-head" style="cursor:default">
       <div class="party">${esc(m.party)}</div>
-      <div class="meta"><span class="tag firm">${esc(m.firm)}</span>${m.city ? `<span class="tag">${esc(m.city)}</span>` : ''}${g.bills.map(b => `<span class="tag">#${esc(b.billNo)}</span>`).join('')}
+      <div class="meta"><span class="tag firm">${esc(m.company || m.firm)}</span>${m.city ? `<span class="tag">${esc(m.city)}</span>` : ''}${g.bills.map(b => `<span class="tag">#${esc(b.billNo)}</span>`).join('')}
         <span class="tag cases">${cases} cases</span><span class="tag blue">${esc(m.dispatchTransport)}</span>
         <span class="tag">${esc(String(m.dispatchedAt).slice(0, 10))}</span></div>
       <div class="lr-row"><input class="txt" id="lr-${k}" placeholder="LR number" value="${esc(typed[m.key] || '')}" autocomplete="off"

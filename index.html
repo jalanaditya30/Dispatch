@@ -38,9 +38,8 @@
 <script src="app.js"></script>
 <script>
 const S_PACK = 'To pack', S_READY = 'Ready to dispatch', S_SENT = 'Dispatched - LR pending', S_DONE = 'Complete';
-const FIRMS = ['All', 'SNT', 'Cash', 'MRS'];
-const isCash = (r) => /^CASH/i.test(r.billNo);
-const firmOf = (r) => isCash(r) ? 'Cash' : r.firm;
+const FIRMS = ['All', 'SNT', 'SNT Cash', 'MRS'];
+const firmOf = (r) => r.company || r.firm;
 const AREAS = ['Sarkhej', 'Aslali'];
 const VEHICLES = [['big', 'Big'], ['small', 'Small'], ['self', 'Self']];
 let records = [], transports = [], tab = 'ready', firm = 'All', openKey = '', busy = false;
@@ -86,7 +85,7 @@ function render() {
 function head(r, extra) {
   const cases = parseInt(r.cases, 10) > 0 ? `<span class="tag cases">${esc(r.cases)} cases</span>` : '<span class="tag nocases">No cases yet</span>';
   return `<div class="party">${esc(r.party || '(party not read)')}</div>
-    <div class="meta"><span class="tag firm">${esc(r.firm)}</span>${isCash(r) ? '<span class="tag warn">Cash</span>' : ''}<span class="tag">#${esc(r.billNo)}</span>${cases}
+    <div class="meta"><span class="tag firm">${esc(firmOf(r))}</span><span class="tag">#${esc(r.billNo)}</span>${cases}
     ${r.city ? `<span class="tag">${esc(r.city)}</span>` : ''}${r.suggested ? `<span class="tag blue">${esc(r.suggested)}</span>` : ''}<span class="tag">${esc(r.billDate)}</span>${extra || ''}</div>`;
 }
 
