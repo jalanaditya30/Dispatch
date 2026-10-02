@@ -102,7 +102,6 @@ async function loadData() {
 const OUTBOX_KEY = 'outbox:' + location.pathname;
 let outbox = (() => { try { return JSON.parse(store.get(OUTBOX_KEY)) || []; } catch (e) { return []; } })();
 let sending = false, writeGen = 0, retryTimer;
-const MAX_TRIES = 6;
 
 function saveOutbox() { store.set(OUTBOX_KEY, JSON.stringify(outbox)); updatePending(); }
 function updatePending() {
@@ -114,6 +113,8 @@ function updatePending() {
 const isSaving = (key) => outbox.some(op => op.params.key === key || String(op.params.keys || '').split(',').includes(key));
 
 function enqueue(params, label, local) {
+  // "op" names this one save, so the sheet can tell a resend (after a lost reply) from a new save.
+  params.op = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const op = { params, label, local: local || {}, tries: 0 };
   outbox.push(op); saveOutbox();
   applyOp(op);
@@ -129,15 +130,13 @@ async function flush() {
     while (outbox.length) {
       const op = outbox[0];
       let res;
-      try { res = await api(op.params); } catch (e) {
-        // No signal or the sheet is busy: keep it and try again shortly.
-        op.tries++;
-        if (op.tries < MAX_TRIES) {
-          saveOutbox(); setDot('err', 'Not saved yet, retrying');
-          retryTimer = setTimeout(flush, Math.min(30000, 2000 * 2 ** op.tries));
-          return;
-        }
-        res = { ok: false, error: e.message };
+      try { res = await api(op.params); } catch (e) { res = { busy: true }; }
+      if (res.busy) {
+        // No signal, or the sheet is busy with other saves: keep it and try again shortly.
+        // Resending is safe, the sheet ignores a save it has already done.
+        op.tries++; saveOutbox(); setDot('err', 'Not saved yet, retrying');
+        retryTimer = setTimeout(flush, Math.min(30000, 1000 * 2 ** op.tries));
+        return;
       }
       outbox.shift(); saveOutbox(); writeGen++; wrote = true;
       if (!res.ok) toast(op.label + ' NOT saved: ' + (res.error || 'error'), 'err');
