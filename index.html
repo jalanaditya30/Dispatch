@@ -16,7 +16,7 @@
 </div>
 <div class="wrap">
   <div class="status" id="status">Loading…</div>
-  <input class="search" id="search" placeholder="Search party or bill no" oninput="render()">
+  <input class="search" id="search" placeholder="Search party, city or bill no" oninput="render()">
   <div class="chips" id="chips"></div>
   <div class="tabs">
     <button class="tab" data-tab="pack" onclick="setTab('pack')"><small id="nPack">0</small>To pack</button>
@@ -38,7 +38,9 @@
 <script src="app.js"></script>
 <script>
 const S_PACK = 'To pack', S_READY = 'Ready to dispatch', S_SENT = 'Dispatched - LR pending', S_DONE = 'Complete';
-const FIRMS = ['All', 'SNT', 'MRS'];
+const FIRMS = ['All', 'SNT', 'Cash', 'MRS'];
+const isCash = (r) => /^CASH/i.test(r.billNo);
+const firmOf = (r) => isCash(r) ? 'Cash' : r.firm;
 const AREAS = ['Sarkhej', 'Aslali'];
 const VEHICLES = [['big', 'Big'], ['small', 'Small'], ['self', 'Self']];
 let records = [], transports = [], tab = 'ready', firm = 'All', openKey = '', busy = false;
@@ -64,8 +66,8 @@ async function load() {
 
 function visible() {
   const q = $('search').value.trim().toLowerCase();
-  return records.filter(r => (firm === 'All' || r.firm === firm) &&
-    (!q || (r.party + ' ' + r.billNo).toLowerCase().includes(q)));
+  return records.filter(r => (firm === 'All' || firmOf(r) === firm) &&
+    (!q || (r.party + ' ' + r.billNo + ' ' + r.city).toLowerCase().includes(q)));
 }
 
 function render() {
@@ -84,8 +86,8 @@ function render() {
 function head(r, extra) {
   const cases = parseInt(r.cases, 10) > 0 ? `<span class="tag cases">${esc(r.cases)} cases</span>` : '<span class="tag nocases">No cases yet</span>';
   return `<div class="party">${esc(r.party || '(party not read)')}</div>
-    <div class="meta"><span class="tag firm">${esc(r.firm)}</span><span class="tag">#${esc(r.billNo)}</span>${cases}
-    ${r.transport ? `<span class="tag blue">${esc(r.transport)}</span>` : ''}<span class="tag">${esc(r.billDate)}</span>${extra || ''}</div>`;
+    <div class="meta"><span class="tag firm">${esc(r.firm)}</span>${isCash(r) ? '<span class="tag warn">Cash</span>' : ''}<span class="tag">#${esc(r.billNo)}</span>${cases}
+    ${r.city ? `<span class="tag">${esc(r.city)}</span>` : ''}${r.suggested ? `<span class="tag blue">${esc(r.suggested)}</span>` : ''}<span class="tag">${esc(r.billDate)}</span>${extra || ''}</div>`;
 }
 
 function packCard(r) {
@@ -94,20 +96,23 @@ function packCard(r) {
 }
 
 function readyCard(r) {
-  const d = draft[r.key] || (draft[r.key] = { vehicle: '', area: '', transport: r.transport || '', other: '', with: {} });
+  const d = draft[r.key] || (draft[r.key] = { vehicle: '', area: '', transport: r.suggested || '', other: '', cases: r.cases || '', remark: '', with: {} });
   const others = records.filter(o => o.key !== r.key && o.party === r.party && o.firm === r.firm &&
     (o.status === S_PACK || o.status === S_READY) && daysSince(o.firstPrinted) <= 7);
-  const list = transports.slice(); if (r.transport && !list.includes(r.transport)) list.unshift(r.transport);
+  const list = transports.slice(); if (r.suggested && !list.includes(r.suggested)) list.unshift(r.suggested);
   const k = esc(r.key);
   return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
   <div class="card-head" onclick="toggle('${k}')">${head(r)}</div>
   <div class="card-body">
     <div class="lbl">Transport</div>
     <select onchange="setD('${k}','transport',this.value)">
+      ${d.transport ? '' : '<option value="" selected>Choose transport…</option>'}
       ${list.map(t => `<option${t === d.transport ? ' selected' : ''}>${esc(t)}</option>`).join('')}
       <option value="__other"${d.transport === '__other' ? ' selected' : ''}>Other…</option>
     </select>
     ${d.transport === '__other' ? `<input class="txt" style="margin-top:8px" placeholder="Type transport name" value="${esc(d.other)}" oninput="draft['${k}'].other=this.value">` : ''}
+    <div class="lbl">Cases being sent</div>
+    <input class="txt" inputmode="numeric" value="${esc(d.cases)}" oninput="draft['${k}'].cases=this.value">
     <div class="lbl">Vehicle</div>
     <div class="pick" id="veh-${k}">${VEHICLES.map(([v, n]) => `<button class="${d.vehicle === v ? 'on' : ''}" onclick="setD('${k}','vehicle','${v}')">${n}</button>`).join('')}</div>
     <div class="lbl">Area</div>
@@ -115,6 +120,8 @@ function readyCard(r) {
     ${others.length ? `<div class="lbl">Other bills of this party sent together</div><div class="with">${others.map(o =>
       `<label><input type="checkbox"${d.with[o.key] ? ' checked' : ''} onchange="draft['${k}'].with['${esc(o.key)}']=this.checked">
        #${esc(o.billNo)} · ${esc(o.billDate)} · ${parseInt(o.cases, 10) > 0 ? esc(o.cases) + ' cases' : 'no cases'}</label>`).join('')}</div>` : ''}
+    <div class="lbl">Remark (optional)</div>
+    <input class="txt" placeholder="Anything dispatch should note" value="${esc(d.remark)}" oninput="draft['${k}'].remark=this.value">
     <button class="btn" onclick="dispatch('${k}')">Mark dispatched</button>
   </div></div>`;
 }
@@ -122,11 +129,12 @@ function readyCard(r) {
 function sentCard(r) {
   const k = esc(r.key);
   const extra = `<span class="tag blue">${esc(r.dispatchTransport)}</span>${r.vehicle ? `<span class="tag">${esc(r.vehicle)}</span>` : ''}${r.area ? `<span class="tag">${esc(r.area)}</span>` : ''}
+    ${r.dispatchCases && r.dispatchCases !== r.cases ? `<span class="tag warn">sent ${esc(r.dispatchCases)} cases</span>` : ''}
     ${r.sentWith ? `<span class="tag warn">with #${esc(r.sentWith)}</span>` : ''}
     ${r.lrNo ? `<span class="tag cases">LR ${esc(r.lrNo)}</span>` : '<span class="tag nocases">LR pending</span>'}`;
   return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
   <div class="card-head" onclick="toggle('${k}')">${head(r, extra)}</div>
-  <div class="card-body"><div style="font-size:13px;color:var(--t2)">Dispatched ${esc(r.dispatchedAt)}${r.dispatchedBy ? ' by ' + esc(r.dispatchedBy) : ''}</div>
+  <div class="card-body"><div style="font-size:13px;color:var(--t2)">Dispatched ${esc(r.dispatchedAt)}${r.dispatchedBy ? ' by ' + esc(r.dispatchedBy) : ''}${r.remark ? '<br>Remark: ' + esc(r.remark) : ''}</div>
     ${r.lrNo || r.sentWith ? '' : `<button class="btn ghost" onclick="undo('${k}')">Undo dispatch</button>`}</div></div>`;
 }
 
@@ -141,10 +149,12 @@ async function dispatch(key) {
   if (!d.vehicle) { document.getElementById('veh-' + key).classList.add('need'); bad = true; }
   if (!d.area) { document.getElementById('area-' + key).classList.add('need'); bad = true; }
   if (!transport) bad = true;
-  if (bad) { toast('Choose transport, vehicle and area', true); return; }
+  if (!(parseInt(d.cases, 10) > 0)) bad = true;
+  if (bad) { toast('Fill transport, cases, vehicle and area', true); return; }
   busy = true;
   try {
     const d2 = await api({ action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, by: store.get('name'),
+      cases: String(parseInt(d.cases, 10)), remark: d.remark.trim(),
       with: Object.keys(d.with).filter(x => d.with[x]).join(',') });
     if (!d2.ok) throw new Error(d2.error || 'Not saved');
     toast('Dispatched #' + r.billNo); openKey = ''; delete draft[key];
