@@ -1,95 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LR Entry</title>
-<link rel="stylesheet" href="app.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>LR Entry · SNT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="app.css"/>
 </head>
 <body>
-<div class="bar">
-  <span class="logo">SNT</span>
-  <h1>LR Entry</h1>
-  <a class="nav" href="index.html">Dispatch</a>
-  <button class="who" id="who" onclick="showGate('')"></button>
-  <button class="icon-btn" id="refresh" onclick="load()" aria-label="Refresh">&#8635;</button>
+
+<header class="app-bar">
+  <span class="bar-logo">SNT</span>
+  <span class="bar-title">LR Entry</span>
+  <span class="status-dot" id="statusDot"></span>
+  <span class="bar-clock" id="clock">--:--</span>
+  <button class="who-btn" id="whoBtn" onclick="showGate('')"></button>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()" aria-label="Refresh">↻</button>
+</header>
+
+<div class="chips-row" id="chips"></div>
+
+<div class="search-row">
+  <span class="search-icon">🔍</span>
+  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, transport…" oninput="render()"/>
 </div>
-<div class="wrap">
-  <div class="status" id="status">Loading…</div>
-  <input class="search" id="search" placeholder="Search party or bill no" oninput="render()">
-  <div id="list"></div>
-</div>
-<div class="gate" id="gate" style="display:none">
-  <form onsubmit="gateSubmit(event)">
-    <h2>Sign in</h2><p>Asked once on this device.</p>
-    <input class="txt" id="gateName" placeholder="Your name" autocomplete="name">
-    <input class="txt" id="gatePin" placeholder="Team PIN" inputmode="numeric" autocomplete="off">
-    <div class="err" id="gateErr"></div>
-    <button class="btn" type="submit">Continue</button>
-  </form>
-</div>
-<div class="toast" id="toast"></div>
+
+<main class="list" id="list">
+  <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
+</main>
+
 <script src="app.js"></script>
 <script>
-const S_SENT = 'Dispatched - LR pending';
-let records = [], busy = false;
-const typed = {};   // consignment key -> LR being typed
+document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
-async function load() {
-  $('refresh').classList.add('spin');
+const COMPANIES = ['All', 'SNT', 'SNT Cash', 'MRS'];
+let records = [], transports = [], coFilter = 'All', busy = false;
+const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
+function entry(m) {
+  return typed[m.key] || (typed[m.key] = { lr: '', transport: m.dispatchTransport || '', other: '', date: String(m.dispatchedAt).substring(0, 10) });
+}
+function setT(key, field, value) { typed[key][field] = value; render(); }
+
+$('chips').innerHTML = COMPANIES.map(c =>
+  `<button class="chip${c === coFilter ? ' active' : ''}" data-co="${c}" onclick="setCo('${c}')">${c}</button>`).join('');
+function setCo(c) { coFilter = c; document.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
+
+async function loadData() {
+  setDot('load'); spin(true);
   try {
-    const d = await api({ action: 'board' });
+    const d = await api({ action: 'board', view: 'lr' });
     if (!d.ok) throw new Error(d.error || 'Load failed');
-    records = d.records || [];
-    $('status').className = 'status'; $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!Array.isArray(d.records)) throw new Error(OLD_SCRIPT);
+    records = d.records; transports = d.transports || [];
+    setDot('ok', 'Connected');
     render();
   } catch (e) {
-    $('status').className = 'status err'; $('status').textContent = e.message;
-  } finally { $('refresh').classList.remove('spin'); }
+    setDot('err', e.message);
+    if (!records.length) $('list').innerHTML = connectionError(e.message);
+    else toast(e.message, 'err');
+  } finally { spin(false); }
 }
 
-// A consignment = the bill that was dispatched + any bills ticked as "sent together" with it.
+// A consignment = the bill that was dispatched + the bills ticked as going together with it.
 function consignments() {
-  const pending = records.filter(r => r.status === S_SENT);
-  const mains = pending.filter(r => !r.sentWith);
-  const groups = mains.map(m => ({ main: m, bills: [m].concat(pending.filter(r => r.sentWith === m.billNo && r.firm === m.firm)) }));
-  pending.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith && m.firm === r.firm))
+  const mains = records.filter(r => !r.sentWith);
+  const groups = mains.map(m => ({ main: m, bills: [m].concat(records.filter(r => r.sentWith === m.billNo && r.firm === m.firm)) }));
+  records.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith && m.firm === r.firm))
     .forEach(r => groups.push({ main: r, bills: [r] }));
   return groups;
 }
 
 function render() {
-  const q = $('search').value.trim().toLowerCase();
-  const groups = consignments().filter(g => !q || g.bills.some(b => (b.party + ' ' + b.billNo).toLowerCase().includes(q)))
+  const q = $('searchInput').value.trim().toLowerCase();
+  const groups = consignments()
+    .filter(g => coFilter === 'All' || g.main.company === coFilter)
+    .filter(g => !q || g.bills.some(b => [b.party, b.billNo, b.city, b.dispatchTransport].join(' ').toLowerCase().includes(q)))
     .sort((a, b) => a.main.dispatchedAt.localeCompare(b.main.dispatchedAt));
-  if (!groups.length) { $('list').innerHTML = '<div class="empty">No LR pending.</div>'; return; }
-  $('list').innerHTML = `<div class="grp">${groups.length} waiting for LR, oldest first</div>` + groups.map(g => {
+  if (!groups.length) {
+    $('list').innerHTML = q
+      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(q)}</b>"</div></div>`
+      : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No LR pending</div></div>`;
+    return;
+  }
+  $('list').innerHTML = `<div class="sec-label lred">LR PENDING &nbsp;${groups.length} &nbsp;· oldest first</div>` + groups.map(g => {
     const m = g.main, k = esc(m.key);
     const cases = g.bills.reduce((s, b) => s + (parseInt(b.dispatchCases || b.cases, 10) || 0), 0);
-    return `<div class="card"><div class="card-head" style="cursor:default">
-      <div class="party">${esc(m.party)}</div>
-      <div class="meta"><span class="tag firm">${esc(m.company || m.firm)}</span>${m.city ? `<span class="tag">${esc(m.city)}</span>` : ''}${g.bills.map(b => `<span class="tag">#${esc(b.billNo)}</span>`).join('')}
-        <span class="tag cases">${cases} cases</span><span class="tag blue">${esc(m.dispatchTransport)}</span>
-        <span class="tag">${esc(String(m.dispatchedAt).slice(0, 10))}</span></div>
-      <div class="lr-row"><input class="txt" id="lr-${k}" placeholder="LR number" value="${esc(typed[m.key] || '')}" autocomplete="off"
-          oninput="typed['${k}']=this.value" onkeydown="if(event.key==='Enter')saveLr('${k}')">
-        <button class="btn" onclick="saveLr('${k}')">Save</button></div>
-    </div></div>`;
+    const t = entry(m);
+    const list = transports.slice();
+    if (m.dispatchTransport && !list.includes(m.dispatchTransport)) list.unshift(m.dispatchTransport);
+    const changed = m.dispatchTransport && t.transport !== m.dispatchTransport;
+    return `
+<div class="card" data-id="${k}">
+  <div class="card-head" style="cursor:default">
+    <div class="card-main">
+      <div class="party-name">${esc(m.party)}</div>
+      <div class="cases-row"><span class="cases-badge">📦 ${cases} cases</span></div>
+      <div class="bill-info-row">
+        <span class="co-badge ${coClass(m.company)}">${esc(m.company)}</span>
+        ${g.bills.map(b => `<span class="bill-no-chip">#${esc(b.billNo)}</span>`).join('')}
+        <span class="ic blue">🚛 ${esc(m.dispatchTransport || '—')}</span>
+        ${m.city ? `<span class="ic">📍 ${esc(m.city)}</span>` : ''}
+      </div>
+
+      <div class="field-lbl" style="margin-top:14px">Transport that carried it</div>
+      <select class="t-select" onchange="setT('${k}','transport',this.value)">
+        ${list.map(x => `<option value="${esc(x)}"${x === t.transport ? ' selected' : ''}>${esc(x)}</option>`).join('')}
+        <option value="__other"${t.transport === '__other' ? ' selected' : ''}>Other (type the name)…</option>
+      </select>
+      ${t.transport === '__other' ? `<input class="t-input" style="margin-top:8px" placeholder="Transport name" value="${esc(t.other)}" oninput="typed['${k}'].other=this.value">` : ''}
+      <div class="t-warn${changed ? ' show' : ''}">⚠ Gate marked: <b>${esc(m.dispatchTransport || 'None')}</b></div>
+
+      <div class="field-lbl" style="margin-top:14px">Dispatch date</div>
+      <input class="t-input" type="date" id="dt-${k}" value="${esc(t.date)}" max="${new Date().toLocaleDateString('en-CA')}" onchange="typed['${k}'].date=this.value">
+
+      <div class="field-lbl" style="margin-top:14px">LR number</div>
+      <div class="lr-row" style="margin-top:0">
+        <input class="t-input" id="lr-${k}" placeholder="LR number" value="${esc(t.lr)}" autocomplete="off" autocapitalize="characters"
+          oninput="typed['${k}'].lr=this.value" onkeydown="if(event.key==='Enter')saveLr('${k}')">
+        <button class="lr-save" id="ls-${k}" onclick="saveLr('${k}')">Save</button>
+      </div>
+    </div>
+  </div>
+</div>`;
   }).join('');
 }
 
 async function saveLr(key) {
   if (busy) return;
   const g = consignments().find(x => x.main.key === key);
+  const t = entry(g.main);
   const input = document.getElementById('lr-' + key), lr = input.value.trim();
-  if (!lr) { input.classList.add('need'); toast('Type the LR number', true); return; }
+  const transport = t.transport === '__other' ? t.other.trim() : t.transport;
+  if (!lr) { input.classList.add('required-err'); toast('Type the LR number', 'err'); return; }
+  if (!transport) { toast('Choose the transport', 'err'); return; }
+  if (!t.date) { document.getElementById('dt-' + key).classList.add('required-err'); toast('Choose the dispatch date', 'err'); return; }
   busy = true;
+  const btn = document.getElementById('ls-' + key);
+  btn.disabled = true; btn.textContent = '…';
   try {
-    const d = await api({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, by: store.get('name') });
-    if (!d.ok) throw new Error(d.error || 'Not saved');
-    delete typed[key]; toast('LR saved for ' + g.bills.map(b => '#' + b.billNo).join(', '));
-    await load();
-  } catch (e) { toast(e.message, true); } finally { busy = false; }
+    const res = await api({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') });
+    if (!res.ok) throw new Error(res.error || 'Save failed');
+    delete typed[key];
+    toast('✓ LR saved for ' + g.bills.map(b => '#' + b.billNo).join(', '), 'ok');
+    await loadData();
+  } catch (e) {
+    toast(e.message, 'err'); btn.disabled = false; btn.textContent = 'Save';
+  } finally { busy = false; }
 }
 
 startApp();

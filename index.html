@@ -1,177 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dispatch Board</title>
-<link rel="stylesheet" href="app.css">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Gate Dispatch · SNT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="app.css"/>
 </head>
 <body>
-<div class="bar">
-  <span class="logo">SNT</span>
-  <h1>Dispatch Board</h1>
-  <a class="nav" href="lr.html">LR entry</a>
-  <button class="who" id="who" onclick="showGate('')"></button>
-  <button class="icon-btn" id="refresh" onclick="load()" aria-label="Refresh">&#8635;</button>
-</div>
-<div class="wrap">
-  <div class="status" id="status">Loading…</div>
-  <input class="search" id="search" placeholder="Search party, city or bill no" oninput="render()">
-  <div class="chips" id="chips"></div>
-  <div class="tabs">
-    <button class="tab" data-tab="pack" onclick="setTab('pack')"><small id="nPack">0</small>To pack</button>
-    <button class="tab active" data-tab="ready" onclick="setTab('ready')"><small id="nReady">0</small>Ready</button>
-    <button class="tab" data-tab="sent" onclick="setTab('sent')"><small id="nSent">0</small>Dispatched</button>
+
+<header class="app-bar">
+  <span class="bar-logo">SNT</span>
+  <span class="bar-title">Gate Dispatch</span>
+  <span class="status-dot" id="statusDot"></span>
+  <span class="bar-clock" id="clock">--:--</span>
+  <button class="who-btn" id="whoBtn" onclick="showGate('')"></button>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()" aria-label="Refresh">↻</button>
+</header>
+
+<div class="veh-panel" id="vehPanel">
+  <button class="veh-toggle" onclick="document.getElementById('vehPanel').classList.toggle('open')">
+    <span style="font-size:20px">🚛</span>
+    <span class="veh-toggle-title">Vehicle Load · today</span>
+    <span class="veh-toggle-summary" id="vehSummary">–</span>
+    <span class="veh-toggle-chevron">⌄</span>
+  </button>
+  <div class="veh-body">
+    <div class="veh-row">
+      <div class="veh-card big"><span class="veh-icon">🚛</span><span class="veh-name">BIG</span>
+        <span class="veh-cases" id="bigCases">0</span><span class="veh-cases-label">cases</span></div>
+      <div class="veh-card small"><span class="veh-icon">🚐</span><span class="veh-name">SMALL</span>
+        <span class="veh-cases" id="smallCases">0</span><span class="veh-cases-label">cases</span></div>
+    </div>
   </div>
-  <div id="list"></div>
 </div>
-<div class="gate" id="gate" style="display:none">
-  <form onsubmit="gateSubmit(event)">
-    <h2>Sign in</h2><p>Asked once on this device.</p>
-    <input class="txt" id="gateName" placeholder="Your name" autocomplete="name">
-    <input class="txt" id="gatePin" placeholder="Team PIN" inputmode="numeric" autocomplete="off">
-    <div class="err" id="gateErr"></div>
-    <button class="btn" type="submit">Continue</button>
-  </form>
+
+<div class="chips-row" id="chips"></div>
+
+<div class="tab-row">
+  <button class="tab-btn active no-urgent" id="tabPending" onclick="setTab('pending')">Pending <span class="tab-badge" id="cntPending">0</span></button>
+  <button class="tab-btn no-urgent" id="tabDone" onclick="setTab('done')">Dispatched today <span class="tab-badge" id="cntDone">0</span></button>
 </div>
-<div class="toast" id="toast"></div>
+
+<div class="search-row">
+  <span class="search-icon">🔍</span>
+  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, city…" oninput="render()"/>
+</div>
+
+<main class="list" id="list">
+  <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
+</main>
+
 <script src="app.js"></script>
 <script>
-const S_PACK = 'To pack', S_READY = 'Ready to dispatch', S_SENT = 'Dispatched - LR pending', S_DONE = 'Complete';
-const FIRMS = ['All', 'SNT', 'SNT Cash', 'MRS'];
-const firmOf = (r) => r.company || r.firm;
+document.body.insertAdjacentHTML('beforeend', GATE_HTML);
+
+const S_READY = 'Ready to dispatch';
+const COMPANIES = ['All', 'SNT', 'SNT Cash', 'MRS'];
 const AREAS = ['Sarkhej', 'Aslali'];
-const VEHICLES = [['big', 'Big'], ['small', 'Small'], ['self', 'Self']];
-let records = [], transports = [], tab = 'ready', firm = 'All', openKey = '', busy = false;
-const draft = {};   // key -> {vehicle, area, transport, other, with:{}}
+const VEHICLES = [['big', '🚛 Big'], ['small', '🚐 Small'], ['self', '🧍 Self']];
 
-$('chips').innerHTML = FIRMS.map(f => `<button class="chip${f === firm ? ' active' : ''}" onclick="setFirm('${f}')">${f}</button>`).join('');
+let records = [], packing = [], transports = [];
+let activeTab = 'pending', coFilter = 'All', openId = null, lastDispId = null, busy = false;
+const draft = {};   // key -> what the gatekeeper has chosen so far on that card
 
-function setFirm(f) { firm = f; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.textContent === f)); render(); }
-function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t)); render(); }
+$('chips').innerHTML = COMPANIES.map(c =>
+  `<button class="chip${c === coFilter ? ' active' : ''}" data-co="${c}" onclick="setCo('${c}')">${c}</button>`).join('');
 
-async function load() {
-  $('refresh').classList.add('spin');
+function setCo(c) { coFilter = c; document.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
+function setTab(t) {
+  activeTab = t;
+  $('tabPending').classList.toggle('active', t === 'pending');
+  $('tabDone').classList.toggle('active', t === 'done');
+  render();
+}
+
+async function loadData() {
+  setDot('load'); spin(true);
   try {
     const d = await api({ action: 'board' });
     if (!d.ok) throw new Error(d.error || 'Load failed');
-    records = d.records || []; transports = d.transports || [];
-    $('status').className = 'status'; $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!Array.isArray(d.records)) throw new Error(OLD_SCRIPT);
+    records = d.records; packing = d.packing || []; transports = d.transports || [];
+    setDot('ok', 'Connected');
     render();
   } catch (e) {
-    $('status').className = 'status err'; $('status').textContent = e.message;
-  } finally { $('refresh').classList.remove('spin'); }
+    setDot('err', e.message);
+    if (!records.length) $('list').innerHTML = connectionError(e.message);
+    else toast(e.message, 'err');
+  } finally { spin(false); }
 }
 
+const isPending = (r) => r.status === S_READY;
+const sentCases = (r) => parseInt(r.dispatchCases || r.cases, 10) || 0;
+
 function visible() {
-  const q = $('search').value.trim().toLowerCase();
-  return records.filter(r => (firm === 'All' || firmOf(r) === firm) &&
-    (!q || (r.party + ' ' + r.billNo + ' ' + r.city).toLowerCase().includes(q)));
+  const q = $('searchInput').value.trim().toLowerCase();
+  return records.filter(r => (coFilter === 'All' || r.company === coFilter) &&
+    (!q || [r.party, r.billNo, r.city, r.suggested, r.dispatchTransport].join(' ').toLowerCase().includes(q)));
 }
 
 function render() {
-  const v = visible();
-  const pack = v.filter(r => r.status === S_PACK), ready = v.filter(r => r.status === S_READY);
-  const sent = v.filter(r => r.status === S_SENT || r.status === S_DONE);
-  $('nPack').textContent = pack.length; $('nReady').textContent = ready.length; $('nSent').textContent = sent.length;
-  const byParty = (a, b) => a.party.localeCompare(b.party);
+  const inCo = records.filter(r => coFilter === 'All' || r.company === coFilter);
+  $('cntPending').textContent = inCo.filter(isPending).length;
+  $('cntDone').textContent = inCo.filter(r => !isPending(r)).length;
+
+  const done = records.filter(r => !isPending(r));
+  const big = done.filter(r => r.vehicle === 'big').reduce((s, r) => s + sentCases(r), 0);
+  const small = done.filter(r => r.vehicle === 'small').reduce((s, r) => s + sentCases(r), 0);
+  $('bigCases').textContent = big; $('smallCases').textContent = small;
+  $('vehSummary').textContent = `Big: ${big}c · Small: ${small}c`;
+
+  const vis = visible(), q = $('searchInput').value.trim();
   let html = '';
-  if (tab === 'pack') html = pack.sort((a, b) => a.firstPrinted.localeCompare(b.firstPrinted)).map(packCard).join('');
-  if (tab === 'ready') html = ready.sort(byParty).map(readyCard).join('');
-  if (tab === 'sent') html = sent.sort((a, b) => b.dispatchedAt.localeCompare(a.dispatchedAt)).map(sentCard).join('');
-  $('list').innerHTML = html || '<div class="empty">Nothing here.</div>';
+  if (activeTab === 'pending') {
+    const list = vis.filter(isPending).sort(byName);
+    if (!list.length) {
+      html = q
+        ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(q)}</b>"</div></div>`
+        : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">Nothing waiting to be dispatched</div></div>`;
+    } else {
+      html = `<div class="sec-label">PENDING &nbsp;${list.length}</div>` + list.map(pendingCard).join('');
+    }
+  } else {
+    const list = vis.filter(r => !isPending(r)).sort((a, b) => b.dispatchedAt.localeCompare(a.dispatchedAt));
+    html = list.length
+      ? `<div class="sec-label lgreen">✓ DISPATCHED TODAY &nbsp;${list.length}</div>` + list.map(doneCard).join('')
+      : `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No dispatches yet today</div><div class="empty-sub">Dispatched bills will appear here</div></div>`;
+  }
+  $('list').innerHTML = html;
+  if (lastDispId) {
+    const el = document.querySelector(`[data-id="${CSS.escape(lastDispId)}"]`);
+    if (el) el.classList.add('highlight');
+    lastDispId = null;
+  }
 }
 
-function head(r, extra) {
-  const cases = parseInt(r.cases, 10) > 0 ? `<span class="tag cases">${esc(r.cases)} cases</span>` : '<span class="tag nocases">No cases yet</span>';
-  return `<div class="party">${esc(r.party || '(party not read)')}</div>
-    <div class="meta"><span class="tag firm">${esc(firmOf(r))}</span><span class="tag">#${esc(r.billNo)}</span>${cases}
-    ${r.city ? `<span class="tag">${esc(r.city)}</span>` : ''}${r.suggested ? `<span class="tag blue">${esc(r.suggested)}</span>` : ''}<span class="tag">${esc(r.billDate)}</span>${extra || ''}</div>`;
+function getDraft(r) {
+  return draft[r.key] || (draft[r.key] = { transport: r.suggested || '', other: '', cases: r.cases || '', vehicle: '', area: '', remark: '', with: {} });
 }
 
-function packCard(r) {
-  const old = daysSince(r.firstPrinted) > 2;
-  return `<div class="card${old ? ' old' : ''}"><div class="card-head">${head(r, old ? '<span class="tag warn">Waiting over 2 days</span>' : '')}</div></div>`;
-}
-
-function readyCard(r) {
-  const d = draft[r.key] || (draft[r.key] = { vehicle: '', area: '', transport: r.suggested || '', other: '', cases: r.cases || '', remark: '', with: {} });
-  const others = records.filter(o => o.key !== r.key && o.party === r.party && o.firm === r.firm &&
-    (o.status === S_PACK || o.status === S_READY) && daysSince(o.firstPrinted) <= 7);
-  const list = transports.slice(); if (r.suggested && !list.includes(r.suggested)) list.unshift(r.suggested);
-  const k = esc(r.key);
-  return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
-  <div class="card-head" onclick="toggle('${k}')">${head(r)}</div>
+function pendingCard(r) {
+  const d = getDraft(r), k = esc(r.key);
+  const list = transports.slice();
+  if (r.suggested && !list.includes(r.suggested)) list.unshift(r.suggested);
+  const others = records.filter(isPending).concat(packing)
+    .filter(o => o.key !== r.key && o.party === r.party && o.firm === r.firm);
+  const changed = r.suggested && d.transport && d.transport !== r.suggested;
+  return `
+<div class="card${openId === r.key ? ' open' : ''}" data-id="${k}">
+  <div class="card-head" onclick="toggleCard('${k}')">
+    <div class="card-main">
+      <div class="party-name">${esc(r.party || '(party not read)')}</div>
+      <div class="cases-row"><span class="cases-badge">📦 ${esc(r.cases || '—')} cases</span></div>
+      <div class="bill-info-row">
+        <span class="co-badge ${coClass(r.company)}">${esc(r.company)}</span>
+        <span class="bill-no-chip">#${esc(r.billNo)}</span>
+        <span class="ic blue">🚛 ${esc(r.suggested || '—')}</span>
+        ${r.city ? `<span class="ic">📍 ${esc(r.city)}</span>` : ''}
+        ${r.billDate ? `<span class="ic">📅 ${esc(r.billDate)}</span>` : ''}
+      </div>
+    </div>
+    <div class="chevron">⌄</div>
+  </div>
   <div class="card-body">
-    <div class="lbl">Transport</div>
-    <select onchange="setD('${k}','transport',this.value)">
+    <div class="field-lbl">Transport</div>
+    <select class="t-select" onchange="setD('${k}','transport',this.value)">
       ${d.transport ? '' : '<option value="" selected>Choose transport…</option>'}
-      ${list.map(t => `<option${t === d.transport ? ' selected' : ''}>${esc(t)}</option>`).join('')}
-      <option value="__other"${d.transport === '__other' ? ' selected' : ''}>Other…</option>
+      ${list.map(t => `<option value="${esc(t)}"${t === d.transport ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+      <option value="__other"${d.transport === '__other' ? ' selected' : ''}>Other (type the name)…</option>
     </select>
-    ${d.transport === '__other' ? `<input class="txt" style="margin-top:8px" placeholder="Type transport name" value="${esc(d.other)}" oninput="draft['${k}'].other=this.value">` : ''}
-    <div class="lbl">Cases being sent</div>
-    <input class="txt" inputmode="numeric" value="${esc(d.cases)}" oninput="draft['${k}'].cases=this.value">
-    <div class="lbl">Vehicle</div>
-    <div class="pick" id="veh-${k}">${VEHICLES.map(([v, n]) => `<button class="${d.vehicle === v ? 'on' : ''}" onclick="setD('${k}','vehicle','${v}')">${n}</button>`).join('')}</div>
-    <div class="lbl">Area</div>
-    <div class="pick" id="area-${k}">${AREAS.map(a => `<button class="${d.area === a ? 'on' : ''}" onclick="setD('${k}','area','${a}')">${a}</button>`).join('')}</div>
-    ${others.length ? `<div class="lbl">Other bills of this party sent together</div><div class="with">${others.map(o =>
-      `<label><input type="checkbox"${d.with[o.key] ? ' checked' : ''} onchange="draft['${k}'].with['${esc(o.key)}']=this.checked">
-       #${esc(o.billNo)} · ${esc(o.billDate)} · ${parseInt(o.cases, 10) > 0 ? esc(o.cases) + ' cases' : 'no cases'}</label>`).join('')}</div>` : ''}
-    <div class="lbl">Remark (optional)</div>
-    <input class="txt" placeholder="Anything dispatch should note" value="${esc(d.remark)}" oninput="draft['${k}'].remark=this.value">
-    <button class="btn" onclick="dispatch('${k}')">Mark dispatched</button>
-  </div></div>`;
+    ${d.transport === '__other' ? `<input class="t-input" style="margin-top:8px" placeholder="Transport name" value="${esc(d.other)}" oninput="draft['${k}'].other=this.value">` : ''}
+    <div class="t-warn${changed ? ' show' : ''}">⚠ Suggested was: <b>${esc(r.suggested || 'None')}</b></div>
+
+    <div class="field-lbl" style="margin-top:14px">Cases being sent <span style="color:var(--red)">*</span></div>
+    <input class="t-input" id="cs-${k}" inputmode="numeric" value="${esc(d.cases)}" oninput="draft['${k}'].cases=this.value">
+
+    <div class="field-lbl" style="margin-top:14px">Load into vehicle <span style="color:var(--red)">*</span></div>
+    <div class="veh-pick" id="vp-${k}">
+      ${VEHICLES.map(([v, n]) => `<button class="veh-pick-btn${d.vehicle === v ? ' sel-' + v : ''}" onclick="setD('${k}','vehicle','${v}')">${n}</button>`).join('')}
+    </div>
+
+    <div class="field-lbl" style="margin-top:14px">Transport Area <span style="color:var(--red)">*</span></div>
+    <div class="area-pick" id="ap-${k}">
+      ${AREAS.map(a => `<button class="area-btn${d.area === a ? ' sel' : ''}" onclick="setD('${k}','area','${a}')">📍 ${a}</button>`).join('')}
+    </div>
+
+    ${others.length ? `<div class="field-lbl" style="margin-top:14px">Other bills of this party going together</div>
+      ${others.map(o => `<label class="with-item"><input type="checkbox"${d.with[o.key] ? ' checked' : ''} onchange="draft['${k}'].with['${esc(o.key)}']=this.checked">
+        <span>#${esc(o.billNo)} · ${esc(o.billDate)} · ${parseInt(o.cases, 10) > 0 ? esc(o.cases) + ' cases' : 'no cases on bill'}</span></label>`).join('')}` : ''}
+
+    <div class="field-lbl" style="margin-top:14px">Remark (optional)</div>
+    <input class="t-input" placeholder="Anything to note" value="${esc(d.remark)}" oninput="draft['${k}'].remark=this.value">
+
+    <button class="disp-btn" id="db-${k}" onclick="doDispatch('${k}')">✓ &nbsp;Dispatch Now</button>
+  </div>
+</div>`;
 }
 
-function sentCard(r) {
+function doneCard(r) {
   const k = esc(r.key);
-  const extra = `<span class="tag blue">${esc(r.dispatchTransport)}</span>${r.vehicle ? `<span class="tag">${esc(r.vehicle)}</span>` : ''}${r.area ? `<span class="tag">${esc(r.area)}</span>` : ''}
-    ${r.dispatchCases && r.dispatchCases !== r.cases ? `<span class="tag warn">sent ${esc(r.dispatchCases)} cases</span>` : ''}
-    ${r.sentWith ? `<span class="tag warn">with #${esc(r.sentWith)}</span>` : ''}
-    ${r.lrNo ? `<span class="tag cases">LR ${esc(r.lrNo)}</span>` : '<span class="tag nocases">LR pending</span>'}`;
-  return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
-  <div class="card-head" onclick="toggle('${k}')">${head(r, extra)}</div>
-  <div class="card-body"><div style="font-size:13px;color:var(--t2)">Dispatched ${esc(r.dispatchedAt)}${r.dispatchedBy ? ' by ' + esc(r.dispatchedBy) : ''}${r.remark ? '<br>Remark: ' + esc(r.remark) : ''}</div>
-    ${r.lrNo || r.sentWith ? '' : `<button class="btn ghost" onclick="undo('${k}')">Undo dispatch</button>`}</div></div>`;
+  const changed = r.dispatchTransport && r.suggested && r.dispatchTransport !== r.suggested;
+  const vehTag = r.vehicle === 'big' ? '<span class="veh-tag-big">🚛 BIG</span>'
+    : r.vehicle === 'small' ? '<span class="veh-tag-small">🚐 SMALL</span>'
+    : r.vehicle === 'self' ? '<span class="done-transport">🧍 SELF</span>' : '';
+  const canUndo = !r.lrNo && !r.sentWith;
+  return `
+<div class="done-card" data-id="${k}">
+  <div class="done-top">
+    <div class="done-name">${esc(r.party)}</div>
+    <div class="done-row1">
+      <span class="done-cases">📦 ${esc(r.dispatchCases || r.cases || '—')} cases</span>
+      <span class="done-time">⏱ ${esc(String(r.dispatchedAt).substring(11, 16))}</span>
+      <span class="done-transport">🚛 ${esc(r.dispatchTransport || '—')}</span>
+      ${vehTag}
+      ${r.area ? `<span class="ic" style="font-size:11px">📍 ${esc(r.area)}</span>` : ''}
+      ${changed ? `<span class="was-chip">was: ${esc(r.suggested)}</span>` : ''}
+    </div>
+    <div class="done-row2">
+      <span class="co-badge ${coClass(r.company)}">${esc(r.company)}</span>
+      <span class="bill-no-chip">#${esc(r.billNo)}</span>
+      ${r.city ? `<span class="ic" style="font-size:11px">📍 ${esc(r.city)}</span>` : ''}
+      ${r.sentWith ? `<span class="note-chip">went with #${esc(r.sentWith)}</span>` : ''}
+      ${r.lrNo ? `<span class="lr-chip">LR ${esc(r.lrNo)}</span>` : ''}
+    </div>
+    ${r.remark ? `<div class="done-remark">📝 ${esc(r.remark)}</div>` : ''}
+  </div>
+  ${canUndo ? `<button class="undo-btn" onclick="doUndo('${k}')">
+    <span class="undo-icon">↩</span>
+    <span class="undo-text"><span class="undo-label">Undo Dispatch</span>
+    <span class="undo-sub">Move back to Pending · change transport, vehicle or area</span></span>
+  </button>` : ''}
+</div>`;
 }
 
-function toggle(key) { openKey = openKey === key ? '' : key; render(); }
+function toggleCard(key) {
+  openId = openId === key ? null : key;
+  render();
+  if (openId) document.querySelector(`[data-id="${CSS.escape(key)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 function setD(key, field, value) { draft[key][field] = value; render(); }
 
-async function dispatch(key) {
+async function doDispatch(key) {
   if (busy) return;
-  const d = draft[key], r = records.find(x => x.key === key);
+  const r = records.find(x => x.key === key), d = draft[key];
   const transport = d.transport === '__other' ? d.other.trim() : d.transport;
-  let bad = false;
-  if (!d.vehicle) { document.getElementById('veh-' + key).classList.add('need'); bad = true; }
-  if (!d.area) { document.getElementById('area-' + key).classList.add('need'); bad = true; }
-  if (!transport) bad = true;
-  if (!(parseInt(d.cases, 10) > 0)) bad = true;
-  if (bad) { toast('Fill transport, cases, vehicle and area', true); return; }
+  const cases = parseInt(d.cases, 10);
+  let err = '';
+  if (!transport) err = 'Select a transport first';
+  else if (!(cases > 0)) err = 'Enter the number of cases being sent';
+  else if (!d.vehicle) err = 'Select a vehicle (Big / Small / Self)';
+  else if (!d.area) err = 'Select a transport area';
+  if (err) {
+    if (!(cases > 0)) document.getElementById('cs-' + key)?.classList.add('required-err');
+    if (!d.vehicle) document.getElementById('vp-' + key)?.querySelectorAll('button').forEach(b => b.classList.add('required-err'));
+    if (!d.area) document.getElementById('ap-' + key)?.querySelectorAll('button').forEach(b => b.classList.add('required-err'));
+    toast(err, 'err'); return;
+  }
   busy = true;
+  const btn = document.getElementById('db-' + key);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
   try {
-    const d2 = await api({ action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, by: store.get('name'),
-      cases: String(parseInt(d.cases, 10)), remark: d.remark.trim(),
-      with: Object.keys(d.with).filter(x => d.with[x]).join(',') });
-    if (!d2.ok) throw new Error(d2.error || 'Not saved');
-    toast('Dispatched #' + r.billNo); openKey = ''; delete draft[key];
-    await load();
-  } catch (e) { toast(e.message, true); } finally { busy = false; }
+    const res = await api({ action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases),
+      remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(',') });
+    if (!res.ok) throw new Error(res.error || 'Save failed');
+    delete draft[key]; openId = null; lastDispId = key;
+    toast('✓ ' + r.billNo + ' dispatched', 'ok');
+    await loadData();
+  } catch (e) {
+    toast(e.message, 'err');
+    if (btn) { btn.disabled = false; btn.innerHTML = '✓ &nbsp;Dispatch Now'; }
+  } finally { busy = false; }
 }
 
-async function undo(key) {
-  if (busy) return; busy = true;
+async function doUndo(key) {
+  if (busy) return;
+  busy = true;
   try {
-    const d = await api({ action: 'undo', key });
-    if (!d.ok) throw new Error(d.error || 'Not saved');
-    toast('Dispatch undone'); openKey = ''; await load();
-  } catch (e) { toast(e.message, true); } finally { busy = false; }
+    const r = records.find(x => x.key === key);
+    const res = await api({ action: 'undo', key });
+    if (!res.ok) throw new Error(res.error || 'Undo failed');
+    toast('↩ ' + r.billNo + ' back to pending', 'ok');
+    setTab('pending');
+    await loadData();
+  } catch (e) { toast(e.message, 'err'); } finally { busy = false; }
 }
 
 startApp();
-setInterval(() => { if (!busy && !openKey && store.get('pin')) load(); }, 60000);
+setInterval(() => { if (!busy && !openId && store.get('name')) loadData(); }, 60000);
 </script>
 </body>
 </html>
