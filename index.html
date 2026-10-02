@@ -1,848 +1,168 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Gate Dispatch · SNT</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#EEF1F5;
-  --surface:#FFF;
-  --border:#DDE2EC;
-  --border-strong:#B8C0CE;
-  --text:#0B0F1A;
-  --t2:#4A5568;
-  --t3:#9AA3B2;
-  --red:#D92B2B;--red-bg:#FFF1F1;--red-lt:#FECACA;
-  --green:#15803D;--green-bg:#F0FDF6;--green-lt:#BBF7D0;--green-dk:#0D5C2E;
-  --amber:#B45309;--amber-bg:#FFFAEB;--amber-lt:#FDE68A;
-  --blue:#1D4ED8;--blue-bg:#EFF6FF;
-  --big:#1E40AF;--big-bg:#EFF6FF;--big-lt:#BFDBFE;
-  --small:#5B21B6;--small-bg:#F5F3FF;--small-lt:#C4B5FD;
-  --s1:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --r:12px;--rs:8px
-}
-html{font-size:16px}
-body{background:var(--bg);font-family:'DM Sans',system-ui,sans-serif;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
-
-/* ─── APP BAR ─────── */
-.app-bar{background:var(--surface);border-bottom:1.5px solid var(--border);height:56px;padding:0 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:200;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.bar-logo{background:var(--amber);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;padding:4px 10px;border-radius:6px;flex-shrink:0}
-.bar-title{font-weight:700;font-size:16px;flex:1}
-.bar-clock{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;color:var(--t2);flex-shrink:0}
-.refresh-btn{background:var(--bg);border:1.5px solid var(--border);color:var(--t2);width:40px;height:40px;border-radius:10px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.refresh-btn:active{background:var(--border)}
-.refresh-btn.spin{animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ─── BANNER ──────── */
-/* status dot in app bar */
-.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--amber);transition:background .3s}
-.status-dot.ok {background:var(--green)}
-.status-dot.err{background:var(--red)}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-
-/* ─── VEHICLE PANEL ── */
-.veh-panel{background:var(--surface);border-bottom:2px solid var(--border)}
-.veh-toggle{width:100%;padding:10px 14px;display:flex;align-items:center;gap:10px;background:none;border:none;font-family:inherit;cursor:pointer;text-align:left}
-.veh-toggle-title{font-size:13px;font-weight:700;color:var(--t2);flex:1}
-.veh-toggle-summary{font-size:12px;color:var(--t3)}
-.veh-toggle-chevron{color:var(--t3);font-size:18px;transition:transform .2s}
-.veh-panel.open .veh-toggle-chevron{transform:rotate(180deg)}
-.veh-body{display:none;padding:0 12px 12px}
-.veh-panel.open .veh-body{display:block}
-
-/* Side by side vehicle cards */
-.veh-row{display:flex;gap:10px}
-.veh-card{flex:1;border-radius:var(--r);padding:13px;border:2px solid;text-align:center}
-.veh-card.big  {background:var(--big-bg);border-color:var(--big-lt)}
-.veh-card.small{background:var(--small-bg);border-color:var(--small-lt)}
-.veh-icon{font-size:20px;display:block;margin-bottom:4px}
-.veh-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;display:block;margin-bottom:8px}
-.veh-card.big  .veh-name{color:var(--big)}
-.veh-card.small .veh-name{color:var(--small)}
-.veh-cases{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:28px;display:block;line-height:1}
-.veh-card.big   .veh-cases{color:var(--big)}
-.veh-card.small .veh-cases{color:var(--small)}
-.veh-cases-label{font-size:10px;font-weight:600;color:var(--t3);letter-spacing:.5px;text-transform:uppercase;display:block;margin-top:3px}
-
-/* Transport search inside card */
-.tr-search{width:100%;padding:10px 13px;font-size:15px;font-family:inherit;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);outline:none;color:var(--text);margin-bottom:6px}
-.tr-search:focus{border-color:var(--blue);background:#fff}
-.tr-search::placeholder{color:var(--t3)}
-.tr-list{max-height:180px;overflow-y:auto;border:2px solid var(--border-strong);border-radius:var(--rs);background:var(--surface)}
-.tr-item{padding:12px 14px;font-size:15px;font-weight:600;cursor:pointer;border-bottom:1px solid var(--border)}
-.tr-item:last-child{border-bottom:none}
-.tr-item:active{background:var(--bg)}
-.tr-item.selected{background:var(--blue-bg);color:var(--blue)}
-.tr-none{padding:12px 14px;font-size:13px;color:var(--t3);font-style:italic}
-
-/* Vehicle picker inside card */
-.veh-pick{display:flex;gap:8px;margin-top:12px}
-.veh-pick-btn{flex:1;padding:11px 6px;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:inherit;border:2px solid var(--border);background:var(--bg);color:var(--t2);cursor:pointer;text-align:center;transition:all .15s;line-height:1.3}
-.veh-pick-btn.sel-big  {background:var(--big-bg);border-color:var(--big);color:var(--big)}
-.veh-pick-btn.sel-small{background:var(--small-bg);border-color:var(--small);color:var(--small)}
-.veh-pick-btn.sel-self {background:#F0FDF6;border-color:var(--green-lt);color:var(--green)}
-.veh-pick-btn.required-err{border-color:var(--red)!important;background:var(--red-bg)!important}
-
-/* Area picker */
-.area-pick{display:flex;gap:8px;margin-top:8px}
-.area-btn{flex:1;padding:12px 8px;border-radius:var(--rs);font-size:14px;font-weight:700;font-family:inherit;border:2px solid var(--border);background:var(--bg);color:var(--t2);cursor:pointer;text-align:center;transition:all .15s}
-.area-btn.sel{background:#FFF7ED;border-color:#FDBA74;color:#9A3412}
-.area-btn.required-err{border-color:var(--red)!important;background:var(--red-bg)!important}
-
-/* ─── STATS ───────── */
-/* ─── COMPANY FILTER CHIPS ── */
-.chips-row{background:var(--surface);border-bottom:1.5px solid var(--border);padding:9px 12px;display:flex;gap:7px;overflow-x:auto;scrollbar-width:none}
-.chips-row::-webkit-scrollbar{display:none}
-.chip{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:7px 13px;border-radius:20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.chip:active{opacity:.7}
-.chip.active{background:var(--text);color:#fff;border-color:var(--text)}
-
-/* ─── PENDING/COMPLETED TABS ─── */
-.tab-row{background:var(--surface);border-bottom:2px solid var(--border);padding:0 14px;display:flex;gap:0}
-.tab-btn{
-  padding:12px 16px;font-size:14px;font-weight:700;font-family:inherit;
-  background:none;border:none;border-bottom:3px solid transparent;
-  cursor:pointer;color:var(--t3);margin-bottom:-2px;
-  display:flex;align-items:center;gap:8px;transition:color .15s
-}
-.tab-btn.active{color:var(--text);border-bottom-color:var(--text)}
-.tab-badge{
-  font-size:11px;font-weight:800;
-  min-width:20px;height:20px;padding:0 6px;border-radius:10px;
-  display:inline-flex;align-items:center;justify-content:center;
-  background:var(--border);color:var(--t3)
-}
-.tab-btn.active .tab-badge{background:var(--red);color:#fff}
-.tab-btn.active.no-urgent .tab-badge{background:var(--text);color:#fff}
-
-/* ─── SEARCH ──────── */
-.search-row{background:var(--surface);border-bottom:2px solid var(--border);padding:11px 12px;position:relative}
-.search-icon{position:absolute;left:25px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:18px;pointer-events:none}
-.search-input{width:100%;padding:14px 14px 14px 44px;font-size:17px;font-family:inherit;background:var(--bg);border:2px solid var(--border-strong);border-radius:10px;outline:none;color:var(--text)}
-.search-input:focus{border-color:var(--blue);background:#fff}
-.search-input::placeholder{color:var(--t3)}
-
-/* ─── LIST ────────── */
-.list{padding:12px 11px 90px}
-.sec-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--t3);padding:6px 3px 8px;display:flex;align-items:center;gap:8px}
-.sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
-.sec-label.lred{color:var(--red)}
-.sec-label.lgreen{color:var(--green)}
-
-/* ─── PENDING CARD ── */
-.card{background:var(--surface);border-radius:var(--r);border:1.5px solid var(--border);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
-.card.urgent{border-left:4px solid var(--red);background:var(--red-bg)}
-
-.card-head{padding:16px 14px 14px;cursor:pointer;user-select:none;display:flex;gap:10px;align-items:flex-start}
-.card-main{flex:1;min-width:0}
-.chevron{color:var(--t3);font-size:24px;flex-shrink:0;padding-top:2px;transition:transform .2s}
-.card.open>.card-head .chevron{transform:rotate(180deg)}
-
-/* Party name — large and bold, easy to read */
-.party-name{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;line-height:1.2;word-break:break-word}
-.cases-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.cases-badge{background:var(--text);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:5px 13px;border-radius:8px;letter-spacing:.3px}
-.urgent-tag{background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:4px 10px;border-radius:6px}
-
-.bill-info-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.co-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;border:1.5px solid;white-space:nowrap}
-.co-SNT    {background:#FFFBEB;color:#92400E;border-color:#FCD34D}
-.co-MaaRani{background:#FFF0F6;color:#9D174D;border-color:#F9A8D4}
-.co-Lupin  {background:var(--blue-bg);color:#1E40AF;border-color:#BFDBFE}
-.co-Sun    {background:#FFF7ED;color:#9A3412;border-color:#FDBA74}
-.co-Torque {background:#F5F3FF;color:#5B21B6;border-color:#C4B5FD}
-.bill-no-chip{font-family:'Barlow Condensed',monospace;font-size:13px;font-weight:700;color:var(--t2);background:var(--bg);border:1.5px solid var(--border);padding:3px 8px;border-radius:6px}
-.ic{background:var(--bg);border:1.5px solid var(--border);border-radius:16px;padding:4px 9px;font-size:11.5px;color:var(--t2);font-weight:500;display:inline-flex;align-items:center;gap:3px}
-.ic.blue{background:var(--blue-bg);border-color:#BFDBFE;color:#1E40AF;font-weight:700}
-
-/* ─── CARD BODY ───── */
-.card-body{display:none;padding:14px 13px 15px;border-top:1.5px solid var(--border)}
-.card.open .card-body{display:block}
-.field-lbl{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
-.t-select{width:100%;padding:13px 14px;font-size:16px;font-family:inherit;font-weight:600;background:var(--surface);border:2px solid var(--border-strong);border-radius:var(--rs);color:var(--text);outline:none}
-.t-select:focus{border-color:var(--blue)}
-.t-warn{display:none;font-size:12px;font-weight:600;color:var(--amber);margin-top:6px;padding:7px 10px;background:var(--amber-bg);border-radius:6px;border-left:3px solid var(--amber)}
-.t-warn.show{display:block}
-
-/* Vehicle picker inside card — handled above */
-
-.disp-btn{width:100%;padding:17px;background:var(--green);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 14px rgba(21,128,61,.25)}
-.disp-btn:active{opacity:.85}
-
-/* ─── DONE CARD ───── */
-.done-card{background:var(--green-bg);border:1.5px solid var(--green-lt);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:var(--s1)}
-.done-card.highlight{animation:pulse-g 1.2s ease-out}
-@keyframes pulse-g{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}60%{box-shadow:0 0 0 8px rgba(21,128,61,0)}100%{box-shadow:var(--s1)}}
-
-.done-top{padding:13px 13px 11px}
-.done-name{font-size:18px;font-weight:800;color:var(--green-dk);margin-bottom:7px;line-height:1.25}
-.done-row1{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:8px}
-.done-cases{background:var(--green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;padding:3px 10px;border-radius:7px}
-.done-time{background:#DCFCE7;border:1.5px solid var(--green-lt);border-radius:16px;padding:4px 10px;font-family:'Barlow Condensed',monospace;font-size:13px;color:var(--green-dk);font-weight:700}
-.done-transport{background:#DCFCE7;border:1.5px solid var(--green-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--green-dk);font-weight:700;display:inline-flex;align-items:center;gap:3px}
-.veh-tag-big  {background:var(--big-bg);border:1.5px solid var(--big-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--big);font-weight:700}
-.veh-tag-small{background:var(--small-bg);border:1.5px solid var(--small-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--small);font-weight:700}
-.done-row2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.was-chip{background:var(--amber-bg);border:1.5px solid var(--amber-lt);border-radius:12px;padding:3px 8px;font-size:11px;color:var(--amber);font-weight:600}
-
-/* Undo button — full width, always visible */
-.undo-btn{
-  display:flex;align-items:center;gap:10px;
-  width:calc(100% - 26px);margin:0 13px 13px;
-  padding:14px;background:#FEF3C7;border:2px solid #FCD34D;
-  border-radius:var(--rs);cursor:pointer;font-family:inherit;color:#78350F;
-  transition:background .15s
-}
-.undo-btn:active{background:#FDE68A}
-.undo-btn.disabled{opacity:.4;pointer-events:none}
-.undo-icon{font-size:18px}
-.undo-text{flex:1;text-align:left}
-.undo-label{font-size:14px;font-weight:800;display:block}
-.undo-sub{font-size:11px;font-weight:500;color:#92400E;display:block;margin-top:1px}
-
-/* ─── SETTINGS OVERLAY ── */
-.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end}
-.settings-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 18px 36px;width:100%}
-.settings-title{font-size:18px;font-weight:800;margin-bottom:6px}
-.settings-sub{font-size:13px;color:var(--t2);margin-bottom:18px;line-height:1.6}
-.settings-label{font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
-.settings-input{width:100%;padding:13px 14px;font-size:13px;font-family:monospace;background:var(--bg);border:2px solid var(--border-strong);border-radius:var(--rs);color:var(--text);outline:none;word-break:break-all}
-.settings-input:focus{border-color:var(--blue)}
-.settings-save{width:100%;padding:16px;background:var(--amber);color:#fff;border:none;border-radius:var(--r);font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;margin-top:14px}
-.settings-save:active{opacity:.85}
-.settings-btn{background:var(--bg);border:1.5px solid var(--border);color:var(--t2);width:40px;height:40px;border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.empty{text-align:center;padding:60px 20px 40px}
-.empty-icon{font-size:52px;margin-bottom:14px}
-.empty-title{font-size:18px;font-weight:700;color:var(--t2);margin-bottom:6px}
-.empty-sub{font-size:14px;color:var(--t3)}
-
-/* ─── TOAST ───────── */
-.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:24px;font-weight:700;font-size:13.5px;z-index:999;box-shadow:0 4px 14px rgba(0,0,0,.15);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s;max-width:92vw}
-.toast.show{opacity:1}
-.toast.ok  {background:#052E16;color:#D1FAE5}
-.toast.err {background:#7F1D1D;color:#FEE2E2}
-.toast.info{background:#1E1B4B;color:#EDE9FE}
-</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispatch Board</title>
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
-
-<!-- APP BAR -->
-<header class="app-bar">
-  <span class="bar-logo">SNT</span>
-  <span class="bar-title">Gate Dispatch</span>
-  <span class="status-dot" id="statusDot" title="Connection status"></span>
-  <span class="bar-clock" id="clock">--:--</span>
-  <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
-  <button class="refresh-btn" id="refreshBtn" onclick="loadData()">↻</button>
-</header>
-
-<!-- VEHICLE PANEL -->
-<div class="veh-panel" id="vehPanel">
-  <button class="veh-toggle" onclick="toggleVehPanel()">
-    <span style="font-size:20px">🚛</span>
-    <span class="veh-toggle-title">Vehicle Load</span>
-    <span class="veh-toggle-summary" id="vehSummary">–</span>
-    <span class="veh-toggle-chevron">⌄</span>
-  </button>
-  <div class="veh-body" id="vehBody">
-    <div class="veh-row">
-      <div class="veh-card big">
-        <span class="veh-icon">🚛</span>
-        <span class="veh-name">BIG</span>
-        <span class="veh-cases" id="bigCases">0</span>
-        <span class="veh-cases-label">cases</span>
-      </div>
-      <div class="veh-card small">
-        <span class="veh-icon">🚐</span>
-        <span class="veh-name">SMALL</span>
-        <span class="veh-cases" id="smallCases">0</span>
-        <span class="veh-cases-label">cases</span>
-      </div>
-    </div>
+<div class="bar">
+  <span class="logo">SNT</span>
+  <h1>Dispatch Board</h1>
+  <a class="nav" href="lr.html">LR entry</a>
+  <button class="who" id="who" onclick="showGate('')"></button>
+  <button class="icon-btn" id="refresh" onclick="load()" aria-label="Refresh">&#8635;</button>
+</div>
+<div class="wrap">
+  <div class="status" id="status">Loading…</div>
+  <input class="search" id="search" placeholder="Search party or bill no" oninput="render()">
+  <div class="chips" id="chips"></div>
+  <div class="tabs">
+    <button class="tab" data-tab="pack" onclick="setTab('pack')"><small id="nPack">0</small>To pack</button>
+    <button class="tab active" data-tab="ready" onclick="setTab('ready')"><small id="nReady">0</small>Ready</button>
+    <button class="tab" data-tab="sent" onclick="setTab('sent')"><small id="nSent">0</small>Dispatched</button>
   </div>
+  <div id="list"></div>
 </div>
-
-<!-- COMPANY FILTER CHIPS -->
-<div class="chips-row">
-  <button class="chip active" data-co="ALL"      data-match=""        onclick="setCoFilter('ALL','')">All</button>
-  <button class="chip"        data-co="SNT"      data-match="snt"     onclick="setCoFilter('SNT','snt')">SNT</button>
-  <button class="chip"        data-co="MRS"      data-match="mrs"     onclick="setCoFilter('MRS','mrs')">MRS</button>
-  <button class="chip"        data-co="Lupin"    data-match="lupin"   onclick="setCoFilter('Lupin','lupin')">Lupin</button>
-  <button class="chip"        data-co="Sun"      data-match="sun"     onclick="setCoFilter('Sun','sun')">Sun</button>
-  <button class="chip"        data-co="Torque"   data-match="torque"  onclick="setCoFilter('Torque','torque')">Torque</button>
+<div class="gate" id="gate" style="display:none">
+  <form onsubmit="gateSubmit(event)">
+    <h2>Sign in</h2><p>Asked once on this device.</p>
+    <input class="txt" id="gateName" placeholder="Your name" autocomplete="name">
+    <input class="txt" id="gatePin" placeholder="Team PIN" inputmode="numeric" autocomplete="off">
+    <div class="err" id="gateErr"></div>
+    <button class="btn" type="submit">Continue</button>
+  </form>
 </div>
-
-<!-- TABS: PENDING / COMPLETED -->
-<div class="tab-row">
-  <button class="tab-btn active" id="tabPending" onclick="setTab('pending')">
-    Pending <span class="tab-badge" id="cntPending">0</span>
-  </button>
-  <button class="tab-btn" id="tabDone" onclick="setTab('done')">
-    Completed <span class="tab-badge" id="cntDone">0</span>
-  </button>
-</div>
-
-<!-- SEARCH -->
-<div class="search-row">
-  <span class="search-icon">🔍</span>
-  <input type="search" id="searchInput" class="search-input"
-    placeholder="Search party name, bill no, city…" oninput="onSearch()"/>
-</div>
-
-<!-- MAIN LIST -->
-<main class="list" id="list">
-  <div class="empty">
-    <div class="empty-icon">🔌</div>
-    <div class="empty-title">Connecting…</div>
-    <div class="empty-sub">Please wait</div>
-  </div>
-</main>
-
-<!-- SETTINGS OVERLAY -->
-<div class="settings-overlay" id="settingsOverlay" style="display:none" onclick="closeSettingsIfBg(event)">
-  <div class="settings-sheet">
-    <div class="settings-title">⚙️ Script URL</div>
-    <div class="settings-sub">
-      After redeploying your Apps Script, paste the new Web App URL here.<br>
-      Format: <code style="font-size:11px">https://script.google.com/macros/s/.../exec</code>
-    </div>
-    <div class="settings-label">Web App URL</div>
-    <input type="url" id="settingsUrl" class="settings-input"
-      placeholder="https://script.google.com/macros/s/…/exec"
-      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-    <button class="settings-save" onclick="saveSettings()">Save & Connect</button>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
-
+<script src="app.js"></script>
 <script>
-// ═══════════════════════════════════════════════════
-//  CONFIG
-// ═══════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwXes0mgiJ1H0YAx1wCoEnDQuazquaU0T887QCTXWDAOYeqBridveq3mhBRDm0l_0DB/exec';
+const S_PACK = 'To pack', S_READY = 'Ready to dispatch', S_SENT = 'Dispatched - LR pending', S_DONE = 'Complete';
+const FIRMS = ['All', 'SNT', 'MRS'];
+const AREAS = ['Sarkhej', 'Aslali'];
+const VEHICLES = [['big', 'Big'], ['small', 'Small'], ['self', 'Self']];
+let records = [], transports = [], tab = 'ready', firm = 'All', openKey = '', busy = false;
+const draft = {};   // key -> {vehicle, area, transport, other, with:{}}
 
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
-let records    = [];
-let transports = [];
-let activeTab  = 'pending';
-let search     = '';
-let coFilter   = 'ALL';
-let coMatch    = '';    // keyword to match against company column
-let openId     = null;
-let saving     = {};
-let lastDispId = null;
-let todayCount = 0;
+$('chips').innerHTML = FIRMS.map(f => `<button class="chip${f === firm ? ' active' : ''}" onclick="setFirm('${f}')">${f}</button>`).join('');
 
-function setCoFilter(co, match) {
-  coFilter = co;
-  coMatch  = match || '';
-  document.querySelectorAll('.chip').forEach(c =>
-    c.classList.toggle('active', c.dataset.co === co)
-  );
-  render();
-}
+function setFirm(f) { firm = f; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.textContent === f)); render(); }
+function setTab(t) { tab = t; document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === t)); render(); }
 
-// ═══════════════════════════════════════════════════
-//  STARTUP
-// ═══════════════════════════════════════════════════
-window.onload = () => {
-  startClock();
-  loadData();
-  setInterval(() => { if (!Object.keys(saving).length) loadData(); }, 60000);
-};
-
-function startClock() {
-  const el = document.getElementById('clock');
-  const t = () => { const n=new Date(); el.textContent=pad(n.getHours())+':'+pad(n.getMinutes()); };
-  t(); setInterval(t, 10000);
-}
-
-// ═══════════════════════════════════════════════════
-//  VEHICLE MAP  — in-memory only (no localStorage)
-//  Totals shown in panel come from sheet data (records)
-// ═══════════════════════════════════════════════════
-let vehMap = {};   // id → 'big' | 'small' | 'self'  (pre-dispatch selection only)
-
-function toggleVehPanel() { document.getElementById('vehPanel').classList.toggle('open'); }
-
-function updateVehPanel() {
-  // Totals from sheet (dispatched records with car field)
-  const bigCases   = records.filter(r=>r.status==='dispatched'&&r.car==='big')
-                            .reduce((s,r)=>s+(parseInt(r.cases)||0),0);
-  const smallCases = records.filter(r=>r.status==='dispatched'&&r.car==='small')
-                            .reduce((s,r)=>s+(parseInt(r.cases)||0),0);
-
-  document.getElementById('bigCases').textContent   = bigCases;
-  document.getElementById('smallCases').textContent = smallCases;
-  document.getElementById('vehSummary').textContent =
-    `Big: ${bigCases}c · Small: ${smallCases}c`;
-}
-
-// ═══════════════════════════════════════════════════
-//  LOAD
-// ═══════════════════════════════════════════════════
-async function loadData() {
-  setBanner('load','Refreshing…'); spin(true);
+async function load() {
+  $('refresh').classList.add('spin');
   try {
-    const reqs = [
-      apiFetch(SCRIPT_URL+'?action=load'),
-      apiFetch(SCRIPT_URL+'?action=getTransports')
-    ];
-    const [main, tr] = await Promise.all(reqs);
-    if (!main.ok) throw new Error(main.error||'Load failed');
-
-    // Preserve optimistic records for in-flight saves
-    const inFlight = new Set(Object.keys(saving));
-    if (!inFlight.size) {
-      records = main.records || [];
-    } else {
-      const byId = {}; records.forEach(r => byId[r.id]=r);
-      records = (main.records||[]).map(r => inFlight.has(r.id) && byId[r.id] ? byId[r.id] : r);
-    }
-
-    if (tr && tr.ok) transports = tr.transports || [];
-    if (main.todayCount !== undefined) todayCount = main.todayCount;
-
-    setBanner('ok','Connected · just now');
-    updateVehPanel();
+    const d = await api({ action: 'board' });
+    if (!d.ok) throw new Error(d.error || 'Load failed');
+    records = d.records || []; transports = d.transports || [];
+    $('status').className = 'status'; $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     render();
-  } catch(e) {
-    const msg = e.message || 'Unknown error';
-    setBanner('err', msg.slice(0, 80));
-    if (!records.length) document.getElementById('list').innerHTML =
-      `<div class="empty">
-        <div class="empty-icon">📵</div>
-        <div class="empty-title">Connection error</div>
-        <div class="empty-sub" style="font-size:12px;word-break:break-word;max-width:300px;margin:0 auto">${esc(msg)}</div>
-        <div style="margin-top:16px;font-size:12px;color:var(--t3)">Tap ↻ to retry</div>
-       </div>`;
-  } finally { spin(false); }
+  } catch (e) {
+    $('status').className = 'status err'; $('status').textContent = e.message;
+  } finally { $('refresh').classList.remove('spin'); }
 }
 
-// ═══════════════════════════════════════════════════
-//  RENDER
-// ═══════════════════════════════════════════════════
+function visible() {
+  const q = $('search').value.trim().toLowerCase();
+  return records.filter(r => (firm === 'All' || r.firm === firm) &&
+    (!q || (r.party + ' ' + r.billNo).toLowerCase().includes(q)));
+}
+
 function render() {
-  updateTabCounts();
-
-  let vis = records;
-  if (coFilter !== 'ALL') {
-    const kw = coMatch || coFilter.toLowerCase();
-    vis = records.filter(r => r.company.toLowerCase().includes(kw));
-  }
-  if (search) {
-    const q = search.toLowerCase();
-    vis = vis.filter(r =>
-      r.party.toLowerCase().includes(q)                    ||
-      r.billNo.toLowerCase().includes(q)                   ||
-      (r.suggestedTransport||'').toLowerCase().includes(q) ||
-      (r.actualTransport||'').toLowerCase().includes(q)    ||
-      (r.city||'').toLowerCase().includes(q)
-    );
-  }
-
+  const v = visible();
+  const pack = v.filter(r => r.status === S_PACK), ready = v.filter(r => r.status === S_READY);
+  const sent = v.filter(r => r.status === S_SENT || r.status === S_DONE);
+  $('nPack').textContent = pack.length; $('nReady').textContent = ready.length; $('nSent').textContent = sent.length;
+  const byParty = (a, b) => a.party.localeCompare(b.party);
   let html = '';
-
-  if (activeTab === 'pending') {
-    const urgP  = vis.filter(r => r.status==='pending' && r.urgent).sort(byName);
-    const normP = vis.filter(r => r.status==='pending' && !r.urgent).sort(byName);
-
-    if (!urgP.length && !normP.length) {
-      html = search
-        ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(search)}</b>"</div></div>`
-        : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No pending dispatches</div></div>`;
-    } else {
-      if (urgP.length) {
-        html += `<div class="sec-label lred">🔴 URGENT &nbsp;${urgP.length}</div>`;
-        html += letterGroups(urgP);
-      }
-      if (normP.length) {
-        if (urgP.length) html += `<div class="sec-label" style="margin-top:4px">PENDING &nbsp;${normP.length}</div>`;
-        html += letterGroups(normP);
-      }
-    }
-  } else {
-    // COMPLETED tab — all dispatched rows still in sheet, undo available
-    const done = vis.filter(r => r.status==='dispatched')
-                    .sort((a,b) => b.dispatchTime > a.dispatchTime ? 1 : -1);
-
-    if (!done.length) {
-      html = `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No dispatches yet</div><div class="empty-sub">Dispatched bills will appear here</div></div>`;
-    } else {
-      html += `<div class="sec-label lgreen">✓ DISPATCHED &nbsp;${done.length} &nbsp;· tap ↩ to undo</div>`;
-      done.forEach(r => html += doneCard(r));
-    }
-  }
-
-  document.getElementById('list').innerHTML = html;
-
-  if (openId) {
-    const el = document.querySelector(`[data-id="${CSS.escape(openId)}"]`);
-    if (el) {
-      el.classList.add('open');
-      syncVehPicker(openId, vehMap[openId]||null);
-      syncAreaPicker(openId, areaMap[openId]||null);
-    }
-  }
-  if (lastDispId) {
-    const el = document.querySelector(`[data-id="${CSS.escape(lastDispId)}"]`);
-    if (el) { el.classList.add('highlight'); lastDispId = null; }
-  }
+  if (tab === 'pack') html = pack.sort((a, b) => a.firstPrinted.localeCompare(b.firstPrinted)).map(packCard).join('');
+  if (tab === 'ready') html = ready.sort(byParty).map(readyCard).join('');
+  if (tab === 'sent') html = sent.sort((a, b) => b.dispatchedAt.localeCompare(a.dispatchedAt)).map(sentCard).join('');
+  $('list').innerHTML = html || '<div class="empty">Nothing here.</div>';
 }
 
-// ═══════════════════════════════════════════════════
-//  PENDING CARD
-// ═══════════════════════════════════════════════════
-function pendingCard(r) {
-  const co   = r.company.replace(/\s+/g,'');
-  const opts = buildOpts(r.suggestedTransport);
+function head(r, extra) {
+  const cases = parseInt(r.cases, 10) > 0 ? `<span class="tag cases">${esc(r.cases)} cases</span>` : '<span class="tag nocases">No cases yet</span>';
+  return `<div class="party">${esc(r.party || '(party not read)')}</div>
+    <div class="meta"><span class="tag firm">${esc(r.firm)}</span><span class="tag">#${esc(r.billNo)}</span>${cases}
+    ${r.transport ? `<span class="tag blue">${esc(r.transport)}</span>` : ''}<span class="tag">${esc(r.billDate)}</span>${extra || ''}</div>`;
+}
 
-  return `
-<div class="card ${r.urgent?'urgent':''}" data-id="${esc(r.id)}">
-  <div class="card-head" onclick="toggleCard('${esc(r.id)}')">
-    <div class="card-main">
-      <div class="party-name">${esc(r.party)}</div>
-      <div class="cases-row">
-        <span class="cases-badge">📦 ${r.cases||'—'} cases</span>
-        ${r.urgent?'<span class="urgent-tag">⚡ URGENT</span>':''}
-      </div>
-      <div class="bill-info-row">
-        <span class="co-badge co-${co}">${esc(r.company)}</span>
-        <span class="bill-no-chip">#${esc(r.billNo)}</span>
-        <span class="ic blue">🚛 ${esc(r.suggestedTransport||'—')}</span>
-        ${r.city?`<span class="ic">📍 ${esc(r.city)}</span>`:''}
-        ${r.billDate?`<span class="ic">📅 ${esc(r.billDate)}</span>`:''}
-      </div>
-    </div>
-    <div class="chevron">⌄</div>
-  </div>
+function packCard(r) {
+  const old = daysSince(r.firstPrinted) > 2;
+  return `<div class="card${old ? ' old' : ''}"><div class="card-head">${head(r, old ? '<span class="tag warn">Waiting over 2 days</span>' : '')}</div></div>`;
+}
+
+function readyCard(r) {
+  const d = draft[r.key] || (draft[r.key] = { vehicle: '', area: '', transport: r.transport || '', other: '', with: {} });
+  const others = records.filter(o => o.key !== r.key && o.party === r.party && o.firm === r.firm &&
+    (o.status === S_PACK || o.status === S_READY) && daysSince(o.firstPrinted) <= 7);
+  const list = transports.slice(); if (r.transport && !list.includes(r.transport)) list.unshift(r.transport);
+  const k = esc(r.key);
+  return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
+  <div class="card-head" onclick="toggle('${k}')">${head(r)}</div>
   <div class="card-body">
-
-    <div class="field-lbl">Transport</div>
-    <select class="t-select" id="ts-${esc(r.id)}"
-      onchange="onTrChange('${esc(r.id)}','${esc(r.suggestedTransport||'')}')">
-      ${opts}
+    <div class="lbl">Transport</div>
+    <select onchange="setD('${k}','transport',this.value)">
+      ${list.map(t => `<option${t === d.transport ? ' selected' : ''}>${esc(t)}</option>`).join('')}
+      <option value="__other"${d.transport === '__other' ? ' selected' : ''}>Other…</option>
     </select>
-    <div class="t-warn" id="tw-${esc(r.id)}">⚠ Suggested was: <b>${esc(r.suggestedTransport||'None')}</b></div>
-
-    <div class="field-lbl" style="margin-top:14px">Load into vehicle <span style="color:var(--red)">*</span></div>
-    <div class="veh-pick" id="vp-${esc(r.id)}">
-      <button class="veh-pick-btn" data-veh="big"   onclick="pickVeh(event,'${esc(r.id)}','big')">🚛 Big</button>
-      <button class="veh-pick-btn" data-veh="small" onclick="pickVeh(event,'${esc(r.id)}','small')">🚐 Small</button>
-      <button class="veh-pick-btn" data-veh="self"  onclick="pickVeh(event,'${esc(r.id)}','self')">🧍 Self</button>
-    </div>
-
-    <div class="field-lbl" style="margin-top:14px">Transport Area <span style="color:var(--red)">*</span></div>
-    <div class="area-pick" id="ap-${esc(r.id)}">
-      <button class="area-btn" data-area="Sarkhej" onclick="pickArea(event,'${esc(r.id)}','Sarkhej')">📍 Sarkhej</button>
-      <button class="area-btn" data-area="Aslali"  onclick="pickArea(event,'${esc(r.id)}','Aslali')">📍 Aslali</button>
-    </div>
-
-    <button class="disp-btn" onclick="doDispatch(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
-      ✓ &nbsp;Dispatch Now
-    </button>
-  </div>
-</div>`;
+    ${d.transport === '__other' ? `<input class="txt" style="margin-top:8px" placeholder="Type transport name" value="${esc(d.other)}" oninput="draft['${k}'].other=this.value">` : ''}
+    <div class="lbl">Vehicle</div>
+    <div class="pick" id="veh-${k}">${VEHICLES.map(([v, n]) => `<button class="${d.vehicle === v ? 'on' : ''}" onclick="setD('${k}','vehicle','${v}')">${n}</button>`).join('')}</div>
+    <div class="lbl">Area</div>
+    <div class="pick" id="area-${k}">${AREAS.map(a => `<button class="${d.area === a ? 'on' : ''}" onclick="setD('${k}','area','${a}')">${a}</button>`).join('')}</div>
+    ${others.length ? `<div class="lbl">Other bills of this party sent together</div><div class="with">${others.map(o =>
+      `<label><input type="checkbox"${d.with[o.key] ? ' checked' : ''} onchange="draft['${k}'].with['${esc(o.key)}']=this.checked">
+       #${esc(o.billNo)} · ${esc(o.billDate)} · ${parseInt(o.cases, 10) > 0 ? esc(o.cases) + ' cases' : 'no cases'}</label>`).join('')}</div>` : ''}
+    <button class="btn" onclick="dispatch('${k}')">Mark dispatched</button>
+  </div></div>`;
 }
 
-// ═══════════════════════════════════════════════════
-//  DONE CARD — undo is unlimited while row is in sheet
-// ═══════════════════════════════════════════════════
-function doneCard(r) {
-  const co      = r.company.replace(/\s+/g,'');
-  const changed = r.actualTransport && r.actualTransport !== r.suggestedTransport;
-  const isSv    = !!saving[r.id];
-  const veh     = r.car || null;
-  const vehTag  = veh==='big'   ? '<span class="veh-tag-big">🚛 BIG</span>'
-                : veh==='small' ? '<span class="veh-tag-small">🚐 SMALL</span>'
-                : veh==='self'  ? '<span style="background:#F0FDF6;border:1.5px solid var(--green-lt);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--green);font-weight:700">🧍 SELF</span>'
-                : '';
-
-  return `
-<div class="done-card" data-id="${esc(r.id)}">
-  <div class="done-top">
-    <div class="done-name">${esc(r.party)}</div>
-    <div class="done-row1">
-      <span class="done-cases">📦 ${r.cases||'—'} cases</span>
-      <span class="done-time">⏱ ${esc(r.dispatchTime||'')}</span>
-      <span class="done-transport">🚛 ${esc(r.actualTransport||'—')}</span>
-      ${vehTag}
-      ${r.area ? `<span class="ic" style="font-size:11px">📍 ${esc(r.area)}</span>` : ''}
-      ${changed ? `<span class="was-chip">was: ${esc(r.suggestedTransport)}</span>` : ''}
-    </div>
-    <div class="done-row2">
-      <span class="co-badge co-${co}">${esc(r.company)}</span>
-      <span style="font-size:11px;color:var(--t3);font-family:'Barlow Condensed',monospace;font-weight:600">#${esc(r.billNo)}</span>
-      ${r.city?`<span class="ic" style="font-size:11px">📍 ${esc(r.city)}</span>`:''}
-    </div>
-  </div>
-  <button class="undo-btn ${isSv?'disabled':''}"
-    onclick="doUndo(event,'${esc(r.id)}','${esc(r.company)}','${esc(r.billNo)}')">
-    <span class="undo-icon">↩</span>
-    <span class="undo-text">
-      <span class="undo-label">Undo Dispatch</span>
-      <span class="undo-sub">Move back to Pending · change transport, vehicle or area</span>
-    </span>
-  </button>
-</div>`;
+function sentCard(r) {
+  const k = esc(r.key);
+  const extra = `<span class="tag blue">${esc(r.dispatchTransport)}</span>${r.vehicle ? `<span class="tag">${esc(r.vehicle)}</span>` : ''}${r.area ? `<span class="tag">${esc(r.area)}</span>` : ''}
+    ${r.sentWith ? `<span class="tag warn">with #${esc(r.sentWith)}</span>` : ''}
+    ${r.lrNo ? `<span class="tag cases">LR ${esc(r.lrNo)}</span>` : '<span class="tag nocases">LR pending</span>'}`;
+  return `<div class="card${openKey === r.key ? ' open' : ''}" data-key="${k}">
+  <div class="card-head" onclick="toggle('${k}')">${head(r, extra)}</div>
+  <div class="card-body"><div style="font-size:13px;color:var(--t2)">Dispatched ${esc(r.dispatchedAt)}${r.dispatchedBy ? ' by ' + esc(r.dispatchedBy) : ''}</div>
+    ${r.lrNo || r.sentWith ? '' : `<button class="btn ghost" onclick="undo('${k}')">Undo dispatch</button>`}</div></div>`;
 }
 
-// ═══════════════════════════════════════════════════
-//  DISPATCH — optimistic, validates all mandatory fields
-// ═══════════════════════════════════════════════════
-function doDispatch(e, id, company, billNo) {
-  e.stopPropagation();
-  if (saving[id]) return;
+function toggle(key) { openKey = openKey === key ? '' : key; render(); }
+function setD(key, field, value) { draft[key][field] = value; render(); }
 
-  const sel       = document.getElementById('ts-'+id);
-  const transport = sel ? sel.value : '';
-  const veh       = vehMap[id] || null;
-  const area      = areaMap[id] || null;
-
-  // Validate mandatory fields
-  let err = '';
-  if (!transport) err = 'Select a transport first';
-  else if (!veh)  err = 'Select a vehicle (Big / Small / Self)';
-  else if (!area) err = 'Select a transport area (Sarkhej / Aslali)';
-  if (err) {
-    if (!veh)  { const el=document.getElementById('vp-'+id); if(el) el.querySelectorAll('.veh-pick-btn').forEach(b=>b.classList.add('required-err')); }
-    if (!area) { const el=document.getElementById('ap-'+id); if(el) el.querySelectorAll('.area-btn').forEach(b=>b.classList.add('required-err')); }
-    toast(err, 'err');
-    return;
-  }
-
-  const rec = records.find(r => r.id===id);
-  if (!rec) return;
-  const snap = { ...rec };
-
-  // Optimistic UI — NO device time shown. Time comes from server only.
-  rec.status          = 'dispatched';
-  rec.actualTransport = transport;
-  rec.dispatchTime    = '…';   // placeholder — replaced by server time on response
-  rec.dispatchDate    = fmtTodayDMY();
-  rec.car             = veh;
-  rec.area            = area;
-  openId = null;
-  lastDispId = id;
-  saving[id] = true;
-
-  // Clear local state for this card
-  delete vehMap[id];
-  delete areaMap[id];
-
-  render();
-
-  const url = `${SCRIPT_URL}?action=dispatch`
-    + `&company=${encodeURIComponent(company)}`
-    + `&billNo=${encodeURIComponent(billNo)}`
-    + `&transport=${encodeURIComponent(transport)}`
-    + `&car=${encodeURIComponent(veh)}`
-    + `&area=${encodeURIComponent(area)}`;
-
-  apiFetch(url).then(data => {
-    delete saving[id];
-    if (!data.ok) { Object.assign(rec, snap); render(); toast('Save failed: '+(data.error||'err'),'err'); return; }
-    if (data.dispatchTime) rec.dispatchTime = data.dispatchTime;
-    render();
-    updateVehPanel();
-    toast('✓ '+billNo+' dispatched · '+rec.dispatchTime,'ok');
-  }).catch(() => {
-    delete saving[id];
-    Object.assign(rec, snap);
-    render();
-    toast('Network error — try again','err');
-  });
-}
-
-// ═══════════════════════════════════════════════════
-//  UNDO — no time restriction; row must still be in sheet
-// ═══════════════════════════════════════════════════
-function doUndo(e, id, company, billNo) {
-  e.stopPropagation();
-  if (saving[id]) return;
-
-  const rec = records.find(r => r.id===id);
-  if (!rec) return;
-  const snap = { ...rec };
-
-  rec.status='pending'; rec.actualTransport=null; rec.dispatchTime=null; rec.dispatchDate=null; rec.car=null; rec.area=null;
-  delete vehMap[id];
-  delete areaMap[id];
-  saving[id] = true;
-
-  setTab('pending', false);
-  render(); updateVehPanel();
-
-  const url = `${SCRIPT_URL}?action=undo&company=${encodeURIComponent(company)}&billNo=${encodeURIComponent(billNo)}`;
-  apiFetch(url).then(data => {
-    delete saving[id];
-    if (!data.ok) { Object.assign(rec, snap); render(); toast('Undo failed: '+(data.error||'err'),'err'); return; }
-    render();
-    toast('↩ '+billNo+' back to pending','ok');
-  }).catch(() => {
-    delete saving[id];
-    Object.assign(rec, snap);
-    render();
-    toast('Network error — try again','err');
-  });
-}
-
-// ═══════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════
-function buildOpts(suggested) {
-  const list = [...transports];
-  if (suggested && !list.includes(suggested)) list.unshift(suggested);
-  if (!list.length) return `<option value="${esc(suggested||'')}">${esc(suggested||'(No transports)')}</option>`;
-  return list.map(t=>`<option value="${esc(t)}"${t===suggested?' selected':''}>${esc(t)}</option>`).join('');
-}
-
-// ═══════════════════════════════════════════════════
-//  VEHICLE PICKER  (Big / Small / Self — mandatory)
-// ═══════════════════════════════════════════════════
-function pickVeh(e, id, veh) {
-  e.stopPropagation();
-  vehMap[id] = veh;
-  syncVehPicker(id, veh);
-  // Clear error state
-  const wrap = document.getElementById('vp-'+id);
-  if (wrap) wrap.querySelectorAll('.veh-pick-btn').forEach(b=>b.classList.remove('required-err'));
-}
-function syncVehPicker(id, veh) {
-  const wrap = document.getElementById('vp-'+id);
-  if (!wrap) return;
-  wrap.querySelectorAll('.veh-pick-btn').forEach(btn => {
-    btn.className = 'veh-pick-btn' + (btn.dataset.veh===veh ? ' sel-'+veh : '');
-  });
-}
-
-// ═══════════════════════════════════════════════════
-//  AREA PICKER  (Sarkhej / Aslali — mandatory)
-// ═══════════════════════════════════════════════════
-let areaMap = {};   // id → 'Sarkhej' | 'Aslali'
-
-function pickArea(e, id, area) {
-  e.stopPropagation();
-  areaMap[id] = area;
-  syncAreaPicker(id, area);
-  const wrap = document.getElementById('ap-'+id);
-  if (wrap) wrap.querySelectorAll('.area-btn').forEach(b=>b.classList.remove('required-err'));
-}
-function syncAreaPicker(id, area) {
-  const wrap = document.getElementById('ap-'+id);
-  if (!wrap) return;
-  wrap.querySelectorAll('.area-btn').forEach(btn => {
-    btn.className = 'area-btn' + (btn.dataset.area===area ? ' sel' : '');
-  });
-}
-
-// ═══════════════════════════════════════════════════
-//  TABS
-// ═══════════════════════════════════════════════════
-function setTab(tab, doRender=true) {
-  activeTab = tab;
-  document.getElementById('tabPending').classList.toggle('active', tab==='pending');
-  document.getElementById('tabDone').classList.toggle('active', tab==='done');
-  if (doRender) render();
-}
-
-function updateTabCounts() {
-  // Count only within active company filter
-  const filtered = coFilter === 'ALL'
-    ? records
-    : records.filter(r => r.company.toLowerCase().includes(coMatch || coFilter.toLowerCase()));
-
-  const pend = filtered.filter(r => r.status==='pending').length;
-  const done = filtered.filter(r => r.status==='dispatched').length;
-  const urg  = filtered.filter(r => r.status==='pending' && r.urgent).length;
-
-  const pendEl = document.getElementById('cntPending');
-  const doneEl = document.getElementById('cntDone');
-  const tabP   = document.getElementById('tabPending');
-
-  if (pendEl) pendEl.textContent = pend || '0';
-  if (doneEl) doneEl.textContent = done || '0';
-  if (tabP)   tabP.classList.toggle('no-urgent', !urg);
-}
-
-// ═══════════════════════════════════════════════════
-//  CARD TOGGLE
-// ═══════════════════════════════════════════════════
-function toggleCard(id) {
-  if (openId===id) {
-    openId=null;
-    document.querySelector(`[data-id="${CSS.escape(id)}"]`)?.classList.remove('open');
-  } else {
-    if (openId) document.querySelector(`[data-id="${CSS.escape(openId)}"]`)?.classList.remove('open');
-    openId=id;
-    const el = document.querySelector(`[data-id="${CSS.escape(id)}"]`);
-    el?.classList.add('open');
-    setTimeout(() => {
-      syncVehPicker(id, vehMap[id]||null);
-      syncAreaPicker(id, areaMap[id]||null);
-      el?.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }, 60);
-  }
-}
-function onTrChange(id, suggested) {
-  const s=document.getElementById('ts-'+id), w=document.getElementById('tw-'+id);
-  if(s&&w) w.classList.toggle('show', !!suggested && s.value!==suggested);
-}
-function onSearch() { search=document.getElementById('searchInput').value.trim(); render(); }
-
-// ═══════════════════════════════════════════════════
-//  STATS
-// ═══════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════
-async function apiFetch(url) {
-  const r = await fetch(url, {redirect:'follow'});
-  const text = await r.text();
+async function dispatch(key) {
+  if (busy) return;
+  const d = draft[key], r = records.find(x => x.key === key);
+  const transport = d.transport === '__other' ? d.other.trim() : d.transport;
+  let bad = false;
+  if (!d.vehicle) { document.getElementById('veh-' + key).classList.add('need'); bad = true; }
+  if (!d.area) { document.getElementById('area-' + key).classList.add('need'); bad = true; }
+  if (!transport) bad = true;
+  if (bad) { toast('Choose transport, vehicle and area', true); return; }
+  busy = true;
   try {
-    return JSON.parse(text);
-  } catch(_) {
-    // Script returned HTML instead of JSON — extract useful part
-    const snippet = text.replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim().slice(0,120);
-    throw new Error('Not JSON — ' + (snippet || 'empty response') + ' [HTTP ' + r.status + ']');
-  }
+    const d2 = await api({ action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, by: store.get('name'),
+      with: Object.keys(d.with).filter(x => d.with[x]).join(',') });
+    if (!d2.ok) throw new Error(d2.error || 'Not saved');
+    toast('Dispatched #' + r.billNo); openKey = ''; delete draft[key];
+    await load();
+  } catch (e) { toast(e.message, true); } finally { busy = false; }
 }
-function byName(a,b){return a.party.localeCompare(b.party,'en',{sensitivity:'base'})}
-function byDate(a,b){return parseDMY(a.billDate)-parseDMY(b.billDate)}
 
-// Groups sorted records — A-Z, no dividers
-function letterGroups(list) {
-  return list.map(r => pendingCard(r)).join('');
+async function undo(key) {
+  if (busy) return; busy = true;
+  try {
+    const d = await api({ action: 'undo', key });
+    if (!d.ok) throw new Error(d.error || 'Not saved');
+    toast('Dispatch undone'); openKey = ''; await load();
+  } catch (e) { toast(e.message, true); } finally { busy = false; }
 }
-function parseDMY(s){if(!s)return 0;const[d,m,y]=s.split('/');return new Date(+y,+m-1,+d).getTime()||0}
-function fmtTodayDMY(){const n=new Date();return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()}
-function pad(n){return String(n).padStart(2,'0')}
-function truncate(s,n){return s.length>n?s.slice(0,n)+'…':s}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')}
-function setBanner(state,msg){
-  const dot = document.getElementById('statusDot');
-  if (!dot) return;
-  dot.className = 'status-dot' + (state==='ok' ? ' ok' : state==='err' ? ' err' : '');
-  dot.title = msg;
-}
-function spin(v){document.getElementById('refreshBtn').classList.toggle('spin',v)}
 
-let toastTimer;
-function toast(msg,type){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.className='toast '+type+' show';
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
-}
+startApp();
+setInterval(() => { if (!busy && !openKey && store.get('pin')) load(); }, 60000);
 </script>
 </body>
 </html>

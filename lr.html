@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LR Entry</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="bar">
+  <span class="logo">SNT</span>
+  <h1>LR Entry</h1>
+  <a class="nav" href="index.html">Dispatch</a>
+  <button class="who" id="who" onclick="showGate('')"></button>
+  <button class="icon-btn" id="refresh" onclick="load()" aria-label="Refresh">&#8635;</button>
+</div>
+<div class="wrap">
+  <div class="status" id="status">Loading…</div>
+  <input class="search" id="search" placeholder="Search party or bill no" oninput="render()">
+  <div id="list"></div>
+</div>
+<div class="gate" id="gate" style="display:none">
+  <form onsubmit="gateSubmit(event)">
+    <h2>Sign in</h2><p>Asked once on this device.</p>
+    <input class="txt" id="gateName" placeholder="Your name" autocomplete="name">
+    <input class="txt" id="gatePin" placeholder="Team PIN" inputmode="numeric" autocomplete="off">
+    <div class="err" id="gateErr"></div>
+    <button class="btn" type="submit">Continue</button>
+  </form>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+<script>
+const S_SENT = 'Dispatched - LR pending';
+let records = [], busy = false;
+const typed = {};   // consignment key -> LR being typed
+
+async function load() {
+  $('refresh').classList.add('spin');
+  try {
+    const d = await api({ action: 'board' });
+    if (!d.ok) throw new Error(d.error || 'Load failed');
+    records = d.records || [];
+    $('status').className = 'status'; $('status').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    render();
+  } catch (e) {
+    $('status').className = 'status err'; $('status').textContent = e.message;
+  } finally { $('refresh').classList.remove('spin'); }
+}
+
+// A consignment = the bill that was dispatched + any bills ticked as "sent together" with it.
+function consignments() {
+  const pending = records.filter(r => r.status === S_SENT);
+  const mains = pending.filter(r => !r.sentWith);
+  const groups = mains.map(m => ({ main: m, bills: [m].concat(pending.filter(r => r.sentWith === m.billNo && r.firm === m.firm)) }));
+  pending.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith && m.firm === r.firm))
+    .forEach(r => groups.push({ main: r, bills: [r] }));
+  return groups;
+}
+
+function render() {
+  const q = $('search').value.trim().toLowerCase();
+  const groups = consignments().filter(g => !q || g.bills.some(b => (b.party + ' ' + b.billNo).toLowerCase().includes(q)))
+    .sort((a, b) => a.main.dispatchedAt.localeCompare(b.main.dispatchedAt));
+  if (!groups.length) { $('list').innerHTML = '<div class="empty">No LR pending.</div>'; return; }
+  $('list').innerHTML = `<div class="grp">${groups.length} waiting for LR, oldest first</div>` + groups.map(g => {
+    const m = g.main, k = esc(m.key);
+    const cases = g.bills.reduce((s, b) => s + (parseInt(b.cases, 10) || 0), 0);
+    return `<div class="card"><div class="card-head" style="cursor:default">
+      <div class="party">${esc(m.party)}</div>
+      <div class="meta"><span class="tag firm">${esc(m.firm)}</span>${g.bills.map(b => `<span class="tag">#${esc(b.billNo)}</span>`).join('')}
+        <span class="tag cases">${cases} cases</span><span class="tag blue">${esc(m.dispatchTransport)}</span>
+        <span class="tag">${esc(String(m.dispatchedAt).slice(0, 10))}</span></div>
+      <div class="lr-row"><input class="txt" id="lr-${k}" placeholder="LR number" value="${esc(typed[m.key] || '')}" autocomplete="off"
+          oninput="typed['${k}']=this.value" onkeydown="if(event.key==='Enter')saveLr('${k}')">
+        <button class="btn" onclick="saveLr('${k}')">Save</button></div>
+    </div></div>`;
+  }).join('');
+}
+
+async function saveLr(key) {
+  if (busy) return;
+  const g = consignments().find(x => x.main.key === key);
+  const input = document.getElementById('lr-' + key), lr = input.value.trim();
+  if (!lr) { input.classList.add('need'); toast('Type the LR number', true); return; }
+  busy = true;
+  try {
+    const d = await api({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, by: store.get('name') });
+    if (!d.ok) throw new Error(d.error || 'Not saved');
+    delete typed[key]; toast('LR saved for ' + g.bills.map(b => '#' + b.billNo).join(', '));
+    await load();
+  } catch (e) { toast(e.message, true); } finally { busy = false; }
+}
+
+startApp();
+</script>
+</body>
+</html>
