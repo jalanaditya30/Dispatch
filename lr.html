@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>LR Entry · SNT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://script.google.com"/>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="app.css"/>
 </head>
@@ -37,7 +39,7 @@
 document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
 const COMPANIES = ['All', 'SNT', 'MRS'];
-let records = [], transports = [], coFilter = 'All', busy = false;
+let records = [], transports = [], coFilter = 'All';
 const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
 function entry(m) {
   return typed[m.key] || (typed[m.key] = { lr: '', transport: m.dispatchTransport || '', other: '', date: String(m.dispatchedAt).substring(0, 10) });
@@ -48,20 +50,16 @@ $('chips').innerHTML = COMPANIES.map(c =>
   `<button class="chip${c === coFilter ? ' active' : ''}" data-co="${c}" onclick="setCo('${c}')">${c}</button>`).join('');
 function setCo(c) { coFilter = c; document.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
 
-async function loadData() {
-  setDot('load'); spin(true);
-  try {
-    const d = await api({ action: 'board', view: 'lr' });
-    if (!d.ok) throw new Error(d.error || 'Load failed');
-    if (!Array.isArray(d.records)) throw new Error(OLD_SCRIPT);
-    records = d.records; transports = d.transports || [];
-    setDot('ok', 'Connected');
-    render();
-  } catch (e) {
-    setDot('err', e.message);
-    if (!records.length) $('list').innerHTML = connectionError(e.message);
-    else toast(e.message, 'err');
-  } finally { spin(false); }
+function useBoard(d) {
+  records = d.records; transports = d.transports || [];
+  applyPending();
+  render();
+}
+// An LR saved here but not yet confirmed by the sheet: those bills leave the list straight away.
+function applyOp(op) {
+  if (op.params.action !== 'lr') return;
+  const keys = op.params.keys.split(',');
+  records = records.filter(r => !keys.includes(r.key));
 }
 
 // A consignment = the bill that was dispatched + the bills ticked as going together with it.
@@ -128,8 +126,7 @@ function render() {
   }).join('');
 }
 
-async function saveLr(key) {
-  if (busy) return;
+function saveLr(key) {
   const g = consignments().find(x => x.main.key === key);
   const t = entry(g.main);
   const input = document.getElementById('lr-' + key), lr = input.value.trim();
@@ -137,21 +134,14 @@ async function saveLr(key) {
   if (!lr) { input.classList.add('required-err'); toast('Type the LR number', 'err'); return; }
   if (!transport) { toast('Choose the transport', 'err'); return; }
   if (!t.date) { document.getElementById('dt-' + key).classList.add('required-err'); toast('Choose the dispatch date', 'err'); return; }
-  busy = true;
-  const btn = document.getElementById('ls-' + key);
-  btn.disabled = true; btn.textContent = '…';
-  try {
-    const res = await api({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') });
-    if (!res.ok) throw new Error(res.error || 'Save failed');
-    delete typed[key];
-    toast('✓ LR saved for ' + g.bills.map(b => '#' + b.billNo).join(', '), 'ok');
-    await loadData();
-  } catch (e) {
-    toast(e.message, 'err'); btn.disabled = false; btn.textContent = 'Save';
-  } finally { busy = false; }
+  const bills = g.bills.map(b => '#' + b.billNo).join(', ');
+  delete typed[key];
+  enqueue({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') }, 'LR for ' + bills);
+  render();
+  toast('✓ LR saved for ' + bills, 'ok');
 }
 
-startApp();
+startApp('lr', useBoard);
 </script>
 </body>
 </html>
