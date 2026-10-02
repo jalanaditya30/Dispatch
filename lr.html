@@ -36,7 +36,7 @@
 <script>
 document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
-const COMPANIES = ['All', 'SNT', 'SNT Cash', 'MRS'];
+const COMPANIES = ['All', 'SNT', 'MRS'];
 let records = [], transports = [], coFilter = 'All', busy = false;
 const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
 function entry(m) {
