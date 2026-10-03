@@ -7,14 +7,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Gate Dispatch · SNT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://script.google.com"/>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<meta name="theme-color" content="#2f2d28"/>
+<link rel="icon" href="logo.png"/>
 <link rel="stylesheet" href="app.css"/>
 </head>
 <body>
 
 <header class="app-bar">
-  <span class="bar-logo">SNT</span>
-  <span class="bar-title">Gate Dispatch</span>
+  <span class="bar-logo"><img src="logo.png" alt="SNT"/></span>
+  <span class="bar-title"><b>Gate Dispatch</b><small>Shree Narayani Traders</small></span>
   <span class="status-dot" id="statusDot"></span>
   <span class="bar-clock" id="clock">--:--</span>
   <button class="who-btn" id="whoBtn" onclick="showGate('')"></button>
@@ -64,7 +69,7 @@ const AREAS = ['Sarkhej', 'Aslali'];
 const VEHICLES = [['big', '🚛 Big'], ['small', '🚐 Small'], ['self', '🧍 Self']];
 
 let records = [], packing = [], transports = [];
-let activeTab = 'pending', coFilter = 'All', openId = null, lastDispId = null, busy = false;
+let activeTab = 'pending', coFilter = 'All', openId = null, lastDispId = null;
 const draft = {};   // key -> what the gatekeeper has chosen so far on that card
 
 $('chips').innerHTML = COMPANIES.map(c =>
@@ -80,26 +85,31 @@ function setTab(t) {
 
 function useBoard(d) {
   records = d.records; packing = d.packing || []; transports = d.transports || [];
-  snap.save('gate', d);
+  applyPending();
   render();
 }
-async function loadData() {
-  if (!records.length) {            // first paint: show today's last known list at once
-    const s = snap.load('gate');
-    if (s && Array.isArray(s.records) && String(s.now).substring(0, 10) === todayLocal()) { records = s.records; packing = s.packing || []; transports = s.transports || []; render(); }
+
+// How a save not yet confirmed by the sheet changes what is on screen.
+function applyOp(op) {
+  const p = op.params, r = records.find(x => x.key === p.key);
+  if (!r) return;
+  if (p.action === 'dispatch') {
+    if (!isPending(r)) return;
+    const sent = { status: 'Dispatched', dispatchTransport: p.transport, vehicle: p.vehicle, area: p.area, dispatchedAt: op.local.at };
+    Object.assign(r, sent, { dispatchCases: p.cases, remark: p.remark });
+    p.with.split(',').filter(Boolean).forEach(k => {
+      let o = records.find(x => x.key === k);
+      const pi = packing.findIndex(x => x.key === k);
+      if (!o && pi >= 0) { o = packing.splice(pi, 1)[0]; records.push(o); }
+      if (o) Object.assign(o, sent, { sentWith: r.billNo });
+    });
+  } else if (p.action === 'undo') {
+    Object.assign(r, { status: S_READY, dispatchTransport: '', vehicle: '', area: '', dispatchCases: '', remark: '', dispatchedAt: '' });
   }
-  setDot('load'); spin(true);
-  try {
-    const d = await api({ action: 'board' });
-    if (!d.ok) throw new Error(d.error || 'Load failed');
-    if (!Array.isArray(d.records)) throw new Error(OLD_SCRIPT);
-    setDot('ok', 'Connected');
-    useBoard(d);
-  } catch (e) {
-    setDot('err', e.message);
-    if (!records.length) $('list').innerHTML = connectionError(e.message);
-    else toast(e.message, 'err');
-  } finally { spin(false); }
+}
+function stamp() {
+  const n = new Date();
+  return today() + ' ' + pad(n.getHours()) + ':' + pad(n.getMinutes()) + ':' + pad(n.getSeconds());
 }
 
 const isPending = (r) => r.status === S_READY;
@@ -234,6 +244,7 @@ function doneCard(r) {
       ${r.city ? `<span class="ic" style="font-size:11px">📍 ${esc(r.city)}</span>` : ''}
       ${r.sentWith ? `<span class="note-chip">went with #${esc(r.sentWith)}</span>` : ''}
       ${r.lrNo ? `<span class="lr-chip">LR ${esc(r.lrNo)}</span>` : ''}
+      ${isSaving(r.key) ? '<span class="note-chip">⏳ saving…</span>' : ''}
     </div>
     ${r.remark ? `<div class="done-remark">📝 ${esc(r.remark)}</div>` : ''}
   </div>
@@ -252,8 +263,7 @@ function toggleCard(key) {
 }
 function setD(key, field, value) { draft[key][field] = value; render(); }
 
-async function doDispatch(key) {
-  if (busy) return;
+function doDispatch(key) {
   const r = records.find(x => x.key === key), d = draft[key];
   const transport = d.transport === '__other' ? d.other.trim() : d.transport;
   const cases = parseInt(d.cases, 10);
@@ -268,37 +278,24 @@ async function doDispatch(key) {
     if (!d.area) document.getElementById('ap-' + key)?.querySelectorAll('button').forEach(b => b.classList.add('required-err'));
     toast(err, 'err'); return;
   }
-  busy = true;
-  const btn = document.getElementById('db-' + key);
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  try {
-    const res = await api({ action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases),
-      remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(',') });
-    if (!res.ok) throw new Error(res.error || 'Save failed');
-    delete draft[key]; openId = null; lastDispId = key;
-    toast('✓ ' + r.billNo + ' dispatched', 'ok');
-    if (res.board && Array.isArray(res.board.records)) useBoard(res.board); else await loadData();
-  } catch (e) {
-    toast(e.message, 'err');
-    if (btn) { btn.disabled = false; btn.innerHTML = '✓ &nbsp;Dispatch Now'; }
-  } finally { busy = false; }
+  const params = { action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases),
+    remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(',') };
+  delete draft[key]; openId = null;
+  enqueue(params, '#' + r.billNo, { at: stamp() });
+  render();
+  toast('✓ ' + r.billNo + ' dispatched', 'ok');
 }
 
-async function doUndo(key) {
-  if (busy) return;
-  busy = true;
-  try {
-    const r = records.find(x => x.key === key);
-    const res = await api({ action: 'undo', key });
-    if (!res.ok) throw new Error(res.error || 'Undo failed');
-    toast('↩ ' + r.billNo + ' back to pending', 'ok');
-    setTab('pending');
-    if (res.board && Array.isArray(res.board.records)) useBoard(res.board); else await loadData();
-  } catch (e) { toast(e.message, 'err'); } finally { busy = false; }
+function doUndo(key) {
+  const r = records.find(x => x.key === key);
+  enqueue({ action: 'undo', key }, 'Undo #' + r.billNo);
+  lastDispId = key;
+  setTab('pending');
+  toast('↩ ' + r.billNo + ' back to pending', 'ok');
 }
 
-startApp();
-setInterval(() => { if (!busy && !openId && store.get('name')) loadData(); }, 60000);
+startApp('', useBoard);
+setInterval(() => { if (!sending && !openId && store.get('name')) loadData(); }, 60000);
 </script>
 </body>
 </html>
