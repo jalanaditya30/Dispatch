@@ -38,11 +38,19 @@
 </main>
 
 <script src="app.js"></script>
+<script src="scan.js"></script>
 <script>
 document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
 const COMPANIES = ['All', 'SNT', 'MRS'];
 let records = [], transports = [], coFilter = 'All';
+// LR numbers are always kept in capitals, however they are typed or scanned, so every entry looks the same.
+const upLr = (v) => String(v || '').toUpperCase().replace(/\s+/g, ' ').trim();
+function lrTyping(el, key) {
+  const at = el.selectionStart, up = el.value.toUpperCase();
+  if (up !== el.value) { el.value = up; try { el.setSelectionRange(at, at); } catch (e) {} }
+  typed[key].lr = up;
+}
 const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
 function entry(m) {
   return typed[m.key] || (typed[m.key] = { lr: '', transport: m.dispatchTransport || '', other: '', date: String(m.dispatchedAt).substring(0, 10) });
@@ -120,7 +128,8 @@ function render() {
       <div class="field-lbl" style="margin-top:14px">LR number</div>
       <div class="lr-row" style="margin-top:0">
         <input class="t-input" id="lr-${k}" placeholder="LR number" value="${esc(t.lr)}" autocomplete="off" autocapitalize="characters"
-          oninput="typed['${k}'].lr=this.value" onkeydown="if(event.key==='Enter')saveLr('${k}')">
+          oninput="lrTyping(this,'${k}')" onkeydown="if(event.key==='Enter')saveLr('${k}')">
+        ${canScan ? `<button class="lr-scan" onclick="openScan('${k}')" aria-label="Scan LR QR or barcode">📷</button>` : ''}
         <button class="lr-save" id="ls-${k}" onclick="saveLr('${k}')">Save</button>
       </div>
     </div>
@@ -132,7 +141,7 @@ function render() {
 function saveLr(key) {
   const g = consignments().find(x => x.main.key === key);
   const t = entry(g.main);
-  const input = document.getElementById('lr-' + key), lr = input.value.trim();
+  const input = document.getElementById('lr-' + key), lr = upLr(input.value);
   const transport = t.transport === '__other' ? t.other.trim() : t.transport;
   if (!lr) { input.classList.add('required-err'); toast('Type the LR number', 'err'); return; }
   if (!transport) { toast('Choose the transport', 'err'); return; }
