@@ -159,6 +159,9 @@ function saveLr(key) {
 }
 
 startApp('lr', useBoard);
+// new dispatches from the gate appear by themselves (what is typed is kept - see "typed")
+setInterval(() => { if (!document.hidden && !sending && store.get('name')) loadData(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && store.get('name')) loadData(); });
 </script>
 </body>
 </html>
