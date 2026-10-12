@@ -30,15 +30,15 @@
 
 <div class="search-row">
   <span class="search-icon">🔍</span>
-  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, transport…" oninput="render()"/>
+  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, transport…" oninput="renderSoon()"/>
 </div>
 
 <main class="list" id="list">
   <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
 </main>
 
-<script src="app.js"></script>
-<script src="scan.js"></script>
+<script src="app.js?v=21"></script>
+<script src="scan.js?v=21"></script>
 <script>
 document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
@@ -64,7 +64,7 @@ function setCo(c) { coFilter = c; document.querySelectorAll('.chip').forEach(b =
 function useBoard(d) {
   records = d.records; transports = d.transports || [];
   applyPending();
-  render();
+  safeRender();
 }
 // An LR saved here but not yet confirmed by the sheet: those bills leave the list straight away.
 function applyOp(op) {
@@ -73,11 +73,16 @@ function applyOp(op) {
   records = records.filter(r => !keys.includes(r.key));
 }
 
+// Bill number order: AD007001, AD007002 … then CASH… then MR… - by the number, not letter by letter.
+function billOrder(a, b) {
+  const x = /^([A-Z]*)(\d*)/.exec(String(a || '').toUpperCase()), y = /^([A-Z]*)(\d*)/.exec(String(b || '').toUpperCase());
+  return x[1].localeCompare(y[1]) || (parseInt(x[2] || '0', 10) - parseInt(y[2] || '0', 10)) || String(a).localeCompare(String(b));
+}
 // A consignment = the bill that was dispatched + the bills ticked as going together with it.
 function consignments() {
   const mains = records.filter(r => !r.sentWith);
-  const groups = mains.map(m => ({ main: m, bills: [m].concat(records.filter(r => r.sentWith === m.billNo && r.firm === m.firm)) }));
-  records.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith && m.firm === r.firm))
+  const groups = mains.map(m => ({ main: m, bills: [m].concat(records.filter(r => r.sentWith === m.billNo)) }));
+  records.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith))
     .forEach(r => groups.push({ main: r, bills: [r] }));
   return groups;
 }
@@ -87,14 +92,14 @@ function render() {
   const groups = consignments()
     .filter(g => coFilter === 'All' || g.main.company === coFilter)
     .filter(g => !q || g.bills.some(b => [b.party, b.billNo, b.city, b.dispatchTransport].join(' ').toLowerCase().includes(q)))
-    .sort((a, b) => a.main.dispatchedAt.localeCompare(b.main.dispatchedAt));
+    .sort((a, b) => billOrder(a.main.billNo, b.main.billNo));
   if (!groups.length) {
     $('list').innerHTML = q
       ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(q)}</b>"</div></div>`
       : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No LR pending</div></div>`;
     return;
   }
-  $('list').innerHTML = `<div class="sec-label lred">LR PENDING &nbsp;${groups.length} &nbsp;· oldest first</div>` + groups.map(g => {
+  $('list').innerHTML = `<div class="sec-label lred">LR PENDING &nbsp;${groups.length} &nbsp;· by bill number</div>` + groups.map(g => {
     const m = g.main, k = esc(m.key);
     const cases = g.bills.reduce((s, b) => s + (parseInt(b.dispatchCases || b.cases, 10) || 0), 0);
     const t = entry(m);

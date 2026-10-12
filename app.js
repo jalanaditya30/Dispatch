@@ -10,8 +10,22 @@ const store = {
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, '0');
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
-const coClass = (company) => 'co-' + String(company || '').replace(/\s+/g, '');
+const coClass = (company) => 'co-' + String(company || '').replace(/[^A-Za-z0-9]/g, '');
 const byName = (a, b) => a.party.localeCompare(b.party, 'en', { sensitivity: 'base' });
+
+// Never redraw the list under someone's fingers: if a box in the list is being typed in, wait until they leave it.
+let renderWaiting = false;
+function safeRender() {
+  const a = document.activeElement, list = $('list');
+  if (a && list && list.contains(a) && /INPUT|SELECT|TEXTAREA/.test(a.tagName)) {
+    // (a little later than the blur, so a tap or click on Save / Dispatch is not lost under the redraw)
+    if (!renderWaiting) { renderWaiting = true; a.addEventListener('blur', () => { setTimeout(() => { renderWaiting = false; render(); }, 350); }, { once: true }); }
+    return;
+  }
+  render();
+}
+let soonTimer;
+function renderSoon() { clearTimeout(soonTimer); soonTimer = setTimeout(render, 160); }   // search: wait until typing pauses
 
 const NO_REPLY = 'Cannot reach the Google Sheet script. Open the script link in a browser: it should show "version". Retrying by itself…';
 async function api(params) {
@@ -73,7 +87,7 @@ function startApp(view, use) {
   updatePending();
   $('whoBtn').textContent = store.get('name') || 'Sign in';
   const cached = cachedBoard(view);
-  if (cached) use(cached);   // show the last board at once; the fresh one replaces it when it arrives
+  if (cached) { try { use(cached); } catch (e) { } }   // show the last board at once; the fresh one replaces it when it arrives
   flush();
   if (!store.get('name')) showGate(''); else loadData();
 }
@@ -109,11 +123,41 @@ let reloadTimer;
 
 // Outbox: a save is shown on screen straight away and sent to the sheet in the background, one at a time.
 // It is kept on the device, so closing the page or losing signal does not lose it; it is sent on the next open.
-const OUTBOX_KEY = 'outbox:' + location.pathname;
-let outbox = (() => { try { return JSON.parse(store.get(OUTBOX_KEY)) || []; } catch (e) { return []; } })();
+// One queue per page type (gate / lr), whatever address the page was opened with.
+const PAGE_KIND = /lr\.html$/i.test(location.pathname) ? 'lr' : /godown\.html$/i.test(location.pathname) ? 'godown' : 'gate';
+const OUTBOX_KEY = 'outbox2:' + PAGE_KIND;
+let outbox = (() => {
+  let list = [];
+  try { list = JSON.parse(store.get(OUTBOX_KEY)) || []; } catch (e) { }
+  // saves left by the earlier version of this page (kept under the page address) are picked up too
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('outbox:') !== 0) continue;
+      const path = k.substring(7), kind = /lr\.html$/i.test(path) ? 'lr' : /godown\.html$/i.test(path) ? 'godown' : 'gate';
+      if (kind !== PAGE_KIND) continue;
+      try { (JSON.parse(localStorage.getItem(k)) || []).forEach(op => { if (!list.some(x => x.params.op === op.params.op)) list.push(op); }); } catch (e) { }
+      localStorage.removeItem(k); i--;
+    }
+    if (list.length) localStorage.setItem(OUTBOX_KEY, JSON.stringify(list));
+  } catch (e) { }
+  return list;
+})();
 let sending = false, writeGen = 0, retryTimer;
 
 function saveOutbox() { store.set(OUTBOX_KEY, JSON.stringify(outbox)); updatePending(); }
+
+// A red bar that stays until tapped: a save the sheet refused, or saves that have not reached the sheet for a while.
+const problems = [];
+function showProblem(msg) {
+  problems.push(msg);
+  let el = $('problemBar');
+  if (!el) {
+    document.body.insertAdjacentHTML('afterbegin', '<div id="problemBar" onclick="problems.length=0;this.remove()" style="position:sticky;top:0;z-index:300;background:#b91c1c;color:#fff;padding:10px 14px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer"></div>');
+    el = $('problemBar');
+  }
+  el.innerHTML = problems.slice(-4).map(esc).join('<br>') + '<div style="font-weight:400;font-size:12px;opacity:.85;margin-top:4px">Tap to close</div>';
+}
 function updatePending() {
   const el = $('syncPill');
   if (!el) return;
@@ -127,10 +171,10 @@ function enqueue(params, label, local) {
   params.op = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const op = { params, label, local: local || {}, tries: 0 };
   outbox.push(op); saveOutbox();
-  applyOp(op);
+  try { applyOp(op); } catch (e) { }
   flush();
 }
-function applyPending() { outbox.forEach(applyOp); }
+function applyPending() { outbox.forEach(op => { try { applyOp(op); } catch (e) { } }); }
 
 async function flush() {
   if (sending || !outbox.length) return;
@@ -141,15 +185,34 @@ async function flush() {
       const op = outbox[0];
       let res;
       try { res = await api(op.params); } catch (e) { res = { busy: true }; }
+      // the sheet answered "busy" with a real error many times in a row: stop and say so, instead of retrying for ever
+      if (res.busy && res.error && !/busy/i.test(res.error)) {
+        op.serverErrs = (op.serverErrs || 0) + 1;
+        if (op.serverErrs >= 8) res = { ok: false, error: res.error };
+      }
       if (res.busy) {
         // No signal, or the sheet is busy with other saves: keep it and try again shortly.
         // Resending is safe, the sheet ignores a save it has already done.
         op.tries++; saveOutbox(); setDot('err', 'Not saved yet, retrying');
+        op.since = op.since || Date.now();
+        if (!op.warned && Date.now() - op.since > 3 * 60000) {
+          op.warned = true; saveOutbox();
+          showProblem('⚠ ' + outbox.length + ' save(s) have not reached the Google Sheet for 3 minutes (' + op.label + '). Keep this page open - it keeps trying. Check the internet.');
+        }
         retryTimer = setTimeout(flush, Math.min(30000, 1000 * 2 ** op.tries));
         return;
       }
-      outbox.shift(); saveOutbox(); writeGen++; wrote = true;
-      if (!res.ok) toast(op.label + ' NOT saved: ' + (res.error || 'error'), 'err');
+      outbox.shift(); writeGen++; wrote = true;
+      if (!res.ok) {
+        // refused for good (e.g. another phone dispatched it first): later saves for the same bill are dropped too
+        const keys = [op.params.key].concat(String(op.params.keys || '').split(',')).filter(Boolean);
+        const dropped = outbox.filter(o => [o.params.key].concat(String(o.params.keys || '').split(',')).some(k => keys.includes(k)));
+        outbox = outbox.filter(o => !dropped.includes(o));
+        showProblem('✗ ' + op.label + ' NOT saved: ' + (res.error || 'error') + (dropped.length ? ' (and ' + dropped.length + ' later change(s) to it)' : ''));
+        // the screen showed it as done: put it back as it was (the board reload after this shows the sheet's own state)
+        if (op.params.action === 'dispatch') { try { applyOp({ params: { action: 'undo', key: op.params.key }, local: {} }); } catch (e) { } }
+      }
+      saveOutbox();
     }
   } finally {
     sending = false;

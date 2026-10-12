@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Godown · To Pack · SNT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://script.google.com"/>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<meta name="theme-color" content="#2f2d28"/>
+<link rel="icon" href="logo.png"/>
+<link rel="stylesheet" href="app.css"/>
+<style>
+  .summary{background:var(--surface);border-bottom:1.5px solid var(--border);padding:10px 14px;display:flex;gap:10px}
+  .sum-box{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;text-align:center;background:var(--bg)}
+  .sum-num{font-family:var(--mono);font-weight:800;font-size:26px;line-height:1;display:block}
+  .sum-lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--t3);display:block;margin-top:3px}
+  .sum-box.late{border-color:var(--red-lt);background:var(--red-bg)}
+  .sum-box.late .sum-num{color:var(--red)}
+  .sort-row{display:flex;gap:6px;padding:8px 12px 0;flex-wrap:wrap}
+  .sort-btn{border:1.5px solid var(--border);background:var(--surface);color:var(--t2);padding:6px 11px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer}
+  .sort-btn.active{background:var(--charcoal);color:var(--cream);border-color:var(--charcoal)}
+  .card.late{border-left:4px solid var(--red)}
+  .card.warn{border-left:4px solid var(--amber)}
+  .bills{margin-top:10px;border-top:1px solid var(--border)}
+  .bill-line{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px dashed var(--border);flex-wrap:wrap}
+  .bill-line:last-child{border-bottom:none}
+  .bill-no{font-family:var(--mono);font-weight:700;font-size:15px}
+  .bill-date{font-size:12px;color:var(--t3)}
+  .age{margin-left:auto;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--bg);color:var(--t2);white-space:nowrap}
+  .age.warn{background:var(--amber-bg);color:var(--amber)}
+  .age.late{background:var(--red-bg);color:var(--red)}
+  .count-badge{background:var(--charcoal);color:var(--cream);font-family:var(--mono);font-weight:700;font-size:13px;padding:4px 11px;border-radius:8px}
+  @media(min-width:760px){.summary,.sort-row{max-width:760px;margin-left:auto;margin-right:auto}}
+  .co-DCL{background:#ECFEFF;color:#155E75;border-color:#A5F3FC}
+  .updated{font-size:11px;color:var(--t3);text-align:center;padding:6px 0 0}
+</style>
+</head>
+<body>
+
+<header class="app-bar">
+  <span class="bar-logo"><img src="logo.png" alt="SNT"/></span>
+  <span class="bar-title"><b>Godown · To Pack</b><small>Shree Narayani Traders</small></span>
+  <span class="status-dot" id="statusDot"></span>
+  <span class="bar-clock" id="clock">--:--</span>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadData()" aria-label="Refresh">↻</button>
+</header>
+
+<div class="summary" id="summary"></div>
+<div class="chips-row" id="chips"></div>
+
+<div class="search-row">
+  <span class="search-icon">🔍</span>
+  <input type="search" id="searchInput" class="search-input" placeholder="Search party, bill no, city, transport…" oninput="renderSoon()"/>
+</div>
+<div class="sort-row" id="sorts"></div>
+
+<main class="list" id="list">
+  <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="app.js?v=21"></script>
+<script>
+// Read-only page for the godown: every bill printed but not yet packed (no cases on it yet, not dispatched).
+// A bill leaves this list by itself when it is reprinted with its number of cases.
+const COMPANIES = ['All', 'SNT', 'MRS'];
+const SORTS = [['old', 'Oldest first'], ['party', 'Party A–Z'], ['transport', 'Transport'], ['city', 'City']];
+let records = [], coFilter = 'All', sortBy = 'old', lastLoad = null;
+
+function chips() {
+  $('chips').innerHTML = COMPANIES.map(c =>
+    `<button class="chip${c === coFilter ? ' active' : ''}" onclick="coFilter='${c}';chips();render()">${c}</button>`).join('');
+  $('sorts').innerHTML = SORTS.map(([k, l]) =>
+    `<button class="sort-btn${k === sortBy ? ' active' : ''}" onclick="sortBy='${k}';chips();render()">${l}</button>`).join('');
+}
+
+// "2026-10-10 11:05:00" (India time, from the sheet) -> Date
+function parseStamp(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(s || ''));
+  return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : null;
+}
+// Same rule as the yellow highlight in the sheet: more than 2 days since the day it was first printed.
+function ageOf(stamp) {
+  const d = parseStamp(stamp);
+  if (!d) return { text: '', cls: '', days: 0, hrs: 0 };
+  const now = new Date();
+  const mins = Math.max(0, (now - d) / 60000), hrs = mins / 60;
+  const day0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = (now - day0) / 86400000;
+  let text;
+  if (mins < 60) text = Math.round(mins) + ' min';
+  else if (hrs < 24) text = Math.floor(hrs) + ' h';
+  else text = Math.floor(hrs / 24) + ' day' + (Math.floor(hrs / 24) > 1 ? 's' : '');
+  const cls = days > 2 ? 'late' : hrs >= 24 ? 'warn' : '';
+  return { text: text + ' ago', cls, days, hrs };
+}
+const timeOf = (s) => { const d = parseStamp(s); return d ? pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : ''; };
+
+function useBoard(d) {
+  records = d.records || []; lastLoad = new Date();
+  cacheBoard('godown', d);
+  render();
+}
+async function loadData() {
+  if (!records.length) {
+    const s = cachedBoard('godown');            // the last list this phone saw today: shown at once
+    if (s && Array.isArray(s.records)) { records = s.records; render(); }
+  }
+  setDot('load'); spin(true);
+  try {
+    const d = await api({ action: 'board', view: 'godown' });
+    if (!d.ok) throw new Error(d.error || 'Load failed');
+    if (!Array.isArray(d.records) || (d.version && d.version < 21)) throw new Error(OLD_SCRIPT);
+    setDot('ok', 'Connected');
+    useBoard(d);
+  } catch (e) {
+    setDot('err', e.message);
+    if (!records.length) $('list').innerHTML = connectionError(e.message);
+    else toast(e.message, 'err');
+  } finally { spin(false); }
+}
+
+// one card per party: the godown packs a party's bills together.
+// A bill that says "WITH <bill>" in Transport goes on the card of that bill (its party name may be spelt differently).
+function groups(list) {
+  const map = new Map();
+  const pk = (r) => String(r.party || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const byNo = {}; list.forEach(r => { byNo[r.billNo] = r; });
+  list.forEach(r => {
+    const main = r.goesWith ? byNo[r.goesWith] : null;
+    const k = main ? pk(main) : pk(r);
+    if (!map.has(k)) map.set(k, { party: r.party, city: r.city, transport: r.suggested, bills: [] });
+    const g = map.get(k);
+    g.bills.push(r);
+    if (!g.city && r.city) g.city = r.city;
+    if (!g.transport && r.suggested) g.transport = r.suggested;
+  });
+  const out = [...map.values()];
+  out.forEach(g => {
+    g.bills.sort((a, b) => (a.goesWith ? 1 : 0) - (b.goesWith ? 1 : 0) || String(a.firstPrinted).localeCompare(String(b.firstPrinted)));
+    g.oldest = g.bills[0].firstPrinted;
+  });
+  const by = {
+    old: (a, b) => String(a.oldest).localeCompare(String(b.oldest)),
+    party: (a, b) => String(a.party).localeCompare(String(b.party), 'en', { sensitivity: 'base' }),
+    transport: (a, b) => String(a.transport || 'zzz').localeCompare(String(b.transport || 'zzz')) || String(a.oldest).localeCompare(String(b.oldest)),
+    city: (a, b) => String(a.city || 'zzz').localeCompare(String(b.city || 'zzz')) || String(a.oldest).localeCompare(String(b.oldest))
+  };
+  return out.sort(by[sortBy]);
+}
+
+function render() {
+  const q = $('searchInput').value.trim().toLowerCase();
+  const inFirm = records.filter(r => coFilter === 'All' || r.company === coFilter);
+  const late = inFirm.filter(r => ageOf(r.firstPrinted).cls === 'late').length;
+  const parties = groups(inFirm).length;
+  $('summary').innerHTML =
+    `<div class="sum-box"><span class="sum-num">${inFirm.length}</span><span class="sum-lbl">Bills to pack</span></div>
+     <div class="sum-box"><span class="sum-num">${parties}</span><span class="sum-lbl">Parties</span></div>
+     <div class="sum-box${late ? ' late' : ''}"><span class="sum-num">${late}</span><span class="sum-lbl">Over 2 days</span></div>`;
+
+  const shown = inFirm.filter(r => !q || [r.party, r.billNo, r.city, r.suggested, r.transport].join(' ').toLowerCase().includes(q));
+  const gs = groups(shown);
+  if (!gs.length) {
+    $('list').innerHTML = q
+      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(q)}</b>"</div></div>`
+      : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">Nothing to pack</div><div class="empty-sub">Every printed bill has its cases</div></div>`;
+    return;
+  }
+  $('list').innerHTML = gs.map(g => {
+    const worst = g.bills.map(b => ageOf(b.firstPrinted).cls).includes('late') ? 'late'
+                : g.bills.map(b => ageOf(b.firstPrinted).cls).includes('warn') ? 'warn' : '';
+    return `
+<div class="card ${worst}">
+  <div class="card-head" style="cursor:default">
+    <div class="card-main">
+      <div class="party-name">${esc(g.party)}</div>
+      <div class="cases-row">
+        <span class="count-badge">${g.bills.length} bill${g.bills.length > 1 ? 's' : ''}</span>
+        ${g.city ? `<span class="ic">📍 ${esc(g.city)}</span>` : ''}
+        ${g.transport ? `<span class="ic blue">🚛 ${esc(g.transport)}</span>` : ''}
+      </div>
+      <div class="bills">
+        ${g.bills.map(b => { const a = ageOf(b.firstPrinted), list = records; return `
+        <div class="bill-line">
+          <span class="co-badge ${coClass(b.company)}">${esc(b.company)}</span>
+          <span class="bill-no">${esc(b.billNo)}</span>
+          <span class="bill-date">${esc(b.billDate)} · printed ${esc(timeOf(b.firstPrinted))}</span>
+          ${b.goesWith ? `<span class="ic blue">🔗 goes with #${esc(b.goesWith)}${list.some(x => x.billNo === b.goesWith) ? '' : ' (not printed yet)'}</span>` : ''}
+          <span class="age ${a.cls}">${esc(a.text)}</span>
+        </div>`; }).join('')}
+      </div>
+    </div>
+  </div>
+</div>`;
+  }).join('') + (lastLoad ? `<div class="updated">Updated ${pad(lastLoad.getHours())}:${pad(lastLoad.getMinutes())} · refreshes every minute</div>` : '');
+}
+
+chips();
+startClock();
+loadData();
+setInterval(() => { if (!document.hidden) loadData(); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(); });
+setInterval(() => { if (records.length) render(); }, 60000);   // keeps "x min ago" current
+</script>
+</body>
+</html>

@@ -52,14 +52,14 @@
 
 <div class="search-row">
   <span class="search-icon">🔍</span>
-  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, city…" oninput="render()"/>
+  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, city…" oninput="renderSoon()"/>
 </div>
 
 <main class="list" id="list">
   <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
 </main>
 
-<script src="app.js"></script>
+<script src="app.js?v=21"></script>
 <script>
 document.body.insertAdjacentHTML('beforeend', GATE_HTML);
 
@@ -86,7 +86,7 @@ function setTab(t) {
 function useBoard(d) {
   records = d.records; packing = d.packing || []; transports = d.transports || [];
   applyPending();
-  render();
+  safeRender();
 }
 
 // How a save not yet confirmed by the sheet changes what is on screen.
@@ -95,7 +95,7 @@ function applyOp(op) {
   if (!r) return;
   if (p.action === 'dispatch') {
     if (!isPending(r)) return;
-    const sent = { status: 'Dispatched', dispatchTransport: p.transport, vehicle: p.vehicle, area: p.area, dispatchedAt: op.local.at };
+    const sent = { status: 'Dispatched', dispatchTransport: p.transport, vehicle: p.vehicle, area: p.area, dispatchedAt: op.local.at, _op: p.op };
     Object.assign(r, sent, { dispatchCases: p.cases, remark: p.remark });
     p.with.split(',').filter(Boolean).forEach(k => {
       let o = records.find(x => x.key === k);
@@ -103,8 +103,15 @@ function applyOp(op) {
       if (!o && pi >= 0) { o = packing.splice(pi, 1)[0]; records.push(o); }
       if (o) Object.assign(o, sent, { sentWith: r.billNo });
     });
+    String(p.linked || '').split(',').filter(Boolean).forEach(k => {
+      if (records.some(x => x.key === k)) return;
+      const l = (r.linked || []).find(x => x.key === k);
+      if (l) records.push(Object.assign({ key: k, billNo: l.billNo, company: l.company, firm: l.company, party: l.party || r.party, city: r.city, cases: '', _linked: true }, sent, { sentWith: r.billNo }));
+    });
   } else if (p.action === 'undo') {
-    Object.assign(r, { status: S_READY, dispatchTransport: '', vehicle: '', area: '', dispatchCases: '', remark: '', dispatchedAt: '' });
+    Object.assign(r, { status: S_READY, dispatchTransport: '', vehicle: '', area: '', dispatchCases: '', remark: '', dispatchedAt: '', _op: '' });
+    // the bills that went with it go back too (linked bills are shown again on its card after the next refresh)
+    records = records.filter(x => !(x.sentWith === r.billNo && x.key !== r.key));
   }
 }
 function stamp() {
@@ -113,6 +120,8 @@ function stamp() {
 }
 
 const isPending = (r) => r.status === S_READY;
+// "Dispatched today" holds only today's dispatches: what left on an earlier day is closed and cannot be changed here
+const isDoneToday = (r) => !isPending(r) && String(r.dispatchedAt || '').substring(0, 10) === today();
 const sentCases = (r) => parseInt(r.dispatchCases || r.cases, 10) || 0;
 
 function visible() {
@@ -124,9 +133,9 @@ function visible() {
 function render() {
   const inCo = records.filter(r => coFilter === 'All' || r.company === coFilter);
   $('cntPending').textContent = inCo.filter(isPending).length;
-  $('cntDone').textContent = inCo.filter(r => !isPending(r)).length;
+  $('cntDone').textContent = inCo.filter(isDoneToday).length;
 
-  const done = records.filter(r => !isPending(r));
+  const done = records.filter(isDoneToday);
   const big = done.filter(r => r.vehicle === 'big').reduce((s, r) => s + sentCases(r), 0);
   const small = done.filter(r => r.vehicle === 'small').reduce((s, r) => s + sentCases(r), 0);
   $('bigCases').textContent = big; $('smallCases').textContent = small;
@@ -144,7 +153,7 @@ function render() {
       html = `<div class="sec-label">PENDING &nbsp;${list.length}</div>` + list.map(pendingCard).join('');
     }
   } else {
-    const list = vis.filter(r => !isPending(r)).sort((a, b) => b.dispatchedAt.localeCompare(a.dispatchedAt));
+    const list = vis.filter(isDoneToday).sort((a, b) => b.dispatchedAt.localeCompare(a.dispatchedAt));
     html = list.length
       ? `<div class="sec-label lgreen">✓ DISPATCHED TODAY &nbsp;${list.length}</div>` + list.map(doneCard).join('')
       : `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No dispatches yet today</div><div class="empty-sub">Dispatched bills will appear here</div></div>`;
@@ -181,10 +190,15 @@ function pendingCard(r) {
         ${r.city ? `<span class="ic">📍 ${esc(r.city)}</span>` : ''}
         ${r.billDate ? `<span class="ic">📅 ${esc(r.billDate)}</span>` : ''}
       </div>
+      ${r.linked && r.linked.length ? `<div class="bill-info-row" style="margin-top:6px">
+        <span class="ic" style="font-weight:700">🔗 Goes together:</span>
+        ${r.linked.map(x => `<span class="co-badge ${coClass(x.company)}">${esc(x.company)}</span><span class="bill-no-chip">#${esc(x.billNo)}</span>`).join('')}
+      </div>` : ''}
+      ${r.goesWith ? `<div class="t-warn show" style="margin-top:8px">⚠ ${esc(String(r.flag || '').split('; ').filter(f => f.indexOf('LINK: ') === 0).map(f => f.substring(6)).join(' · ') || ('Bill says it goes with #' + r.goesWith + '. Check before sending.'))}</div>` : ''}
     </div>
     <div class="chevron">⌄</div>
   </div>
-  <div class="card-body">
+  ${openId !== r.key ? '' : `<div class="card-body">
     <div class="field-lbl">Transport</div>
     <select class="t-select" onchange="setD('${k}','transport',this.value)">
       ${d.transport ? '' : '<option value="" selected>Choose transport…</option>'}
@@ -215,7 +229,7 @@ function pendingCard(r) {
     <input class="t-input" placeholder="Anything to note" value="${esc(d.remark)}" oninput="draft['${k}'].remark=this.value">
 
     <button class="disp-btn" id="db-${k}" onclick="doDispatch('${k}')">✓ &nbsp;Dispatch Now</button>
-  </div>
+  </div>`}
 </div>`;
 }
 
@@ -279,15 +293,27 @@ function doDispatch(key) {
     toast(err, 'err'); return;
   }
   const params = { action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases),
-    remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(',') };
+    remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(','),
+    linked: (r.linked || []).map(x => x.key).join(',') };
   delete draft[key]; openId = null;
   enqueue(params, '#' + r.billNo, { at: stamp() });
   render();
-  toast('✓ ' + r.billNo + ' dispatched', 'ok');
+  toast('✓ ' + [r.billNo].concat((r.linked || []).map(x => x.billNo)).join(', ') + ' dispatched', 'ok');
 }
 
 function doUndo(key) {
   const r = records.find(x => x.key === key);
+  // its dispatch has not left this phone yet: simply forget it (nothing to undo on the sheet)
+  // (only one that has never been tried: a tried one may have reached the sheet with its reply lost)
+  const waiting = outbox.findIndex((o, n) => o.params.action === 'dispatch' && o.params.key === key && !o.tries && !(n === 0 && sending));
+  if (waiting >= 0) {
+    outbox.splice(waiting, 1); saveOutbox();
+    applyOp({ params: { action: 'undo', key }, local: {} });
+    lastDispId = key; setTab('pending'); toast('↩ ' + r.billNo + ' back to pending', 'ok');
+    setTimeout(loadData, 300);          // the bills that were ticked with it come back from the sheet
+    return;
+  }
+  // any phone may undo any dispatch (until its LR is entered)
   enqueue({ action: 'undo', key }, 'Undo #' + r.billNo);
   lastDispId = key;
   setTab('pending');
