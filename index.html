@@ -194,7 +194,6 @@ function pendingCard(r) {
         <span class="ic" style="font-weight:700">🔗 Goes together:</span>
         ${r.linked.map(x => `<span class="co-badge ${coClass(x.company)}">${esc(x.company)}</span><span class="bill-no-chip">#${esc(x.billNo)}</span>`).join('')}
       </div>` : ''}
-      ${r.looseWith ? `<div class="t-warn show" style="margin-top:8px">📎 Transport says “WITH” but no bill number - packed with another bill. 0 cases is fine.</div>` : ''}
       ${r.goesWith ? `<div class="t-warn show" style="margin-top:8px">⚠ ${esc(String(r.flag || '').split('; ').filter(f => f.indexOf('LINK: ') === 0).map(f => f.substring(6)).join(' · ') || ('Bill says it goes with #' + r.goesWith + '. Check before sending.'))}</div>` : ''}
     </div>
     <div class="chevron">⌄</div>
@@ -209,7 +208,7 @@ function pendingCard(r) {
     ${d.transport === '__other' ? `<input class="t-input" style="margin-top:8px" placeholder="Transport name" value="${esc(d.other)}" oninput="draft['${k}'].other=this.value">` : ''}
     <div class="t-warn${changed ? ' show' : ''}">⚠ Suggested was: <b>${esc(r.suggested || 'None')}</b></div>
 
-    <div class="field-lbl" style="margin-top:14px">Cases being sent ${r.looseWith ? '<span style="color:var(--text-3,#888);font-weight:500">(0 if they are in another bill\'s boxes)</span>' : '<span style="color:var(--red)">*</span>'}</div>
+    <div class="field-lbl" style="margin-top:14px">Cases being sent <span style="color:var(--red)">*</span></div>
     <input class="t-input" id="cs-${k}" inputmode="numeric" value="${esc(d.cases)}" oninput="draft['${k}'].cases=this.value">
 
     <div class="field-lbl" style="margin-top:14px">Load into vehicle <span style="color:var(--red)">*</span></div>
@@ -271,45 +270,29 @@ function doneCard(r) {
 </div>`;
 }
 
-// Opening a card or picking a transport / vehicle / area redraws only that card, not the whole list (quick on a slow phone).
-// Anything unusual (card not on screen, another tab) falls back to the full redraw.
-function redrawCards(keys) {
-  if (activeTab !== 'pending') { render(); return; }
-  for (const key of keys) {
-    if (!key) continue;
-    const el = document.querySelector(`#list [data-id="${CSS.escape(key)}"]`), r = records.find(x => x.key === key);
-    if (!el || !r || !isPending(r)) { render(); return; }
-    const box = document.createElement('div'); box.innerHTML = pendingCard(r).trim();
-    if (box.children.length !== 1) { render(); return; }
-    el.replaceWith(box.firstElementChild);
-  }
-}
 function toggleCard(key) {
-  const before = openId;
   openId = openId === key ? null : key;
-  redrawCards(before && before !== key ? [before, key] : [key]);
+  render();
   if (openId) document.querySelector(`[data-id="${CSS.escape(key)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-function setD(key, field, value) { draft[key][field] = value; redrawCards([key]); }
+function setD(key, field, value) { draft[key][field] = value; render(); }
 
 function doDispatch(key) {
   const r = records.find(x => x.key === key), d = draft[key];
   const transport = d.transport === '__other' ? d.other.trim() : d.transport;
   const cases = parseInt(d.cases, 10);
-  // a bill whose Transport says "WITH" (no number) was packed with another bill: it may go with 0 cases of its own
-  const zeroOk = !!r.looseWith && (String(d.cases).trim() === '' || cases === 0);
   let err = '';
   if (!transport) err = 'Select a transport first';
-  else if (!(cases > 0) && !zeroOk) err = 'Enter the number of cases being sent';
+  else if (!(cases > 0)) err = 'Enter the number of cases being sent';
   else if (!d.vehicle) err = 'Select a vehicle (Big / Small / Self)';
   else if (!d.area) err = 'Select a transport area';
   if (err) {
-    if (!(cases > 0) && !zeroOk) document.getElementById('cs-' + key)?.classList.add('required-err');
+    if (!(cases > 0)) document.getElementById('cs-' + key)?.classList.add('required-err');
     if (!d.vehicle) document.getElementById('vp-' + key)?.querySelectorAll('button').forEach(b => b.classList.add('required-err'));
     if (!d.area) document.getElementById('ap-' + key)?.querySelectorAll('button').forEach(b => b.classList.add('required-err'));
     toast(err, 'err'); return;
   }
-  const params = { action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases > 0 ? cases : 0),
+  const params = { action: 'dispatch', key, transport, vehicle: d.vehicle, area: d.area, cases: String(cases),
     remark: d.remark.trim(), by: store.get('name'), with: Object.keys(d.with).filter(x => d.with[x]).join(','),
     linked: (r.linked || []).map(x => x.key).join(',') };
   delete draft[key]; openId = null;
@@ -338,9 +321,7 @@ function doUndo(key) {
 }
 
 startApp('', useBoard);
-// every minute while the page is in front; at once when it comes back to the front (a phone in a pocket does not use data)
-setInterval(() => { if (!document.hidden && !sending && !openId && store.get('name')) loadData(); }, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !sending && !openId && store.get('name')) loadData(); });
+setInterval(() => { if (!sending && !openId && store.get('name')) loadData(); }, 60000);
 </script>
 </body>
 </html>
