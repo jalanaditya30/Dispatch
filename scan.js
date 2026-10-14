@@ -36,8 +36,13 @@ function getDetector() {
 function lrCandidates(raw) {
   const text = String(raw || '').trim();
   if (/^[A-Za-z0-9\-\/]{3,25}$/.test(text)) return [text];
+  // "ASL - 139327", "ASL 139327", "ASL / 139327": letters and number belong together (spaces round the dash dropped)
+  const tidy = text.replace(/\s*([\-\/])\s*/g, '$1').replace(/\s+/g, ' ');
+  if (/^[A-Za-z0-9\-\/ ]{3,25}$/.test(tidy) && /\d/.test(tidy)) return [tidy];
   const out = [];
   const add = (v) => { v = String(v || '').trim(); if (v && !out.includes(v)) out.push(v); };
+  // in longer text: a short letter prefix with its number ("LR NO: ASL - 139327") is offered first, whole
+  (text.match(/\b[A-Za-z]{1,6}\s*[\-\/]\s*\d{3,}[A-Za-z0-9]*/g) || []).forEach(t => add(t.replace(/\s*([\-\/])\s*/g, '$1')));
   try {
     const u = new URL(text);
     u.searchParams.forEach((v, k) => { if (/lr|docket|awb|cn|consign|track|bilty|grn|no/i.test(k) && /\d/.test(v)) add(v); });
