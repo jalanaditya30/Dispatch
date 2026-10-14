@@ -68,7 +68,9 @@ button{font-family:inherit}
 
 /* ─── PICKERS inside a card ─── */
 .veh-pick,.area-pick{display:flex;gap:8px}
+.area-pick{flex-wrap:wrap}
 .veh-pick-btn,.area-btn{flex:1;padding:13px 6px;border-radius:var(--rs);font-size:14px;font-weight:600;border:1.5px solid var(--border-strong);background:var(--surface2);color:var(--t2);cursor:pointer;text-align:center;transition:all .12s;line-height:1.3}
+.area-btn{flex:1 1 40%}
 .veh-pick-btn.sel-big{background:var(--big-bg);border:2px solid var(--big);color:var(--big);font-weight:700}
 .veh-pick-btn.sel-small{background:var(--small-bg);border:2px solid var(--small);color:var(--small);font-weight:700}
 .veh-pick-btn.sel-self{background:var(--green-bg);border:2px solid var(--green);color:var(--green);font-weight:700}
