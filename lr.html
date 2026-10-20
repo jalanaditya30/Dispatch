@@ -26,13 +26,108 @@
   <button class="refresh-btn" id="refreshBtn" onclick="loadData()" aria-label="Refresh">↻</button>
 </header>
 
-<div class="chips-row" id="chips"></div>
-
-<div class="search-row">
-  <span class="search-icon">🔍</span>
-  <input type="search" id="searchInput" class="search-input" placeholder="Search party name, bill no, transport…" oninput="renderSoon()"/>
-</div>
-
+<section class="finder" id="finder">
+  <div class="f-top">
+    <div class="seg" id="chips"></div>
+    <button class="saved-btn" id="savedBtn" onclick="openSaved()">↶ Saved today <b id="savedN">0</b></button>
+  </div>
+  <div class="f-find">
+    <div class="f-search"><span>🔍</span><input type="search" id="searchInput" placeholder="Party, city or bill no" oninput="findSoon()" autocomplete="off"/></div>
+    <button class="f-tr-btn" id="trBtn" onclick="toggleTr()"><span id="trLabel">All transport</span> ▾</button>
+    <div class="tr-panel" id="trPanel" hidden></div>
+  </div>
+  <div class="f-sum" id="fSum"></div>
+</section>
+<style>
+.finder{position:sticky;top:64px;z-index:150;background:var(--surface);border-bottom:1.5px solid var(--border);box-shadow:0 6px 16px rgba(47,45,40,.06);padding:10px 12px 8px}
+.f-top{display:flex;align-items:center;gap:8px}
+.seg{display:inline-flex;background:var(--surface3);border-radius:12px;padding:3px;gap:2px}
+.seg .chip{border:0;background:transparent;padding:6px 14px;border-radius:9px;font-size:13px}
+.seg .chip.active{background:var(--charcoal);color:var(--cream)}
+.saved-btn{margin-left:auto;border:1.5px solid var(--green-lt);background:var(--green-bg);color:var(--green-dk);font-weight:700;font-size:13px;border-radius:12px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.saved-btn b{display:inline-block;min-width:20px;padding:0 6px;margin-left:3px;border-radius:9px;background:var(--green);color:#fff;font-size:12px;text-align:center}
+.f-tr{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin:9px -12px 0;padding:0 12px 2px}
+.f-tr::-webkit-scrollbar{display:none}
+.f-tr .chip{padding:7px 13px;font-size:13.5px;display:inline-flex;align-items:center;gap:6px}
+.f-tr .chip small{font-size:11.5px;font-weight:700;background:var(--surface3);color:var(--t2);border-radius:8px;padding:1px 6px}
+.f-tr .chip.active small{background:rgba(255,255,255,.25);color:#fff}
+.f-find{display:flex;gap:8px;margin-top:10px;position:relative}
+.f-tr-btn{flex:0 0 auto;max-width:46%;display:flex;align-items:center;gap:4px;border:1.5px solid var(--border);background:var(--surface2);border-radius:12px;padding:0 12px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden}
+.f-tr-btn span{overflow:hidden;text-overflow:ellipsis}
+.f-tr-btn.on{border-color:var(--terra-1);background:var(--terra-xlt);color:var(--terra-1)}
+.tr-panel{position:absolute;right:0;top:calc(100% + 6px);width:min(300px,92vw);max-height:60vh;overflow:auto;background:#fff;border:1.5px solid var(--border-strong);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.18);z-index:300;padding:6px}
+.tr-panel[hidden]{display:none}
+.tr-opt{display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
+.tr-opt:active{background:var(--surface3)}
+.tr-opt input{width:20px;height:20px;accent-color:var(--terra-1);margin:0}
+.tr-opt small{margin-left:auto;font-size:12px;font-weight:700;color:var(--t3);background:var(--surface3);border-radius:8px;padding:1px 7px}
+.tr-done{position:sticky;bottom:0;width:100%;margin-top:4px;padding:11px;border:0;border-radius:10px;background:var(--charcoal);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer}
+.more-btn{display:block;width:100%;margin:6px 0 14px;padding:13px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--surface);font-weight:700;font-size:14.5px;color:var(--t2);cursor:pointer}
+.f-search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:0 12px}
+.f-search:focus-within,.f-cases:focus{border-color:var(--terra-2);box-shadow:0 0 0 3px rgba(196,98,42,.12)}
+.f-search input{flex:1;min-width:0;border:0;background:transparent;font-size:16px;padding:12px 0;outline:none;font-family:inherit;color:var(--text)}
+.f-cases{width:88px;flex:0 0 88px;font-size:16px;padding:0 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;outline:none;text-align:center;color:var(--text)}
+.f-sum{font-size:12px;color:var(--t3);margin-top:7px;font-weight:600}
+.f-sum b{color:var(--text)}
+.list{padding:6px 12px 110px}
+.day-head{margin:16px 2px 8px;display:flex;align-items:baseline;gap:10px}
+.day-head b{font-size:15px;font-weight:800;letter-spacing:.2px;color:var(--text)}
+.day-head span{font-size:12.5px;color:var(--t3);font-weight:600}
+.day-head i{flex:1;height:1px;background:var(--border-strong);font-style:normal;align-self:center}
+.tr-head{margin:10px 2px 6px;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--t3)}
+.pc{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:10px;padding:14px 14px 14px 18px;box-shadow:var(--s1);overflow:hidden}
+.pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--green)}
+.pc.mid::before{background:#e0a03a}
+.pc.old::before{background:var(--red)}
+.pc-top{display:flex;gap:12px;align-items:flex-start}
+.pc-name{flex:1;min-width:0;font-size:17.5px;font-weight:800;line-height:1.25;color:var(--text);word-break:break-word}
+.pc-cases{flex:0 0 auto;min-width:56px;text-align:center;border-radius:12px;background:var(--charcoal);color:var(--cream);padding:5px 10px 6px}
+.pc-cases b{display:block;font-size:22px;line-height:1.1;font-family:var(--mono)}
+.pc-cases small{font-size:10px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.pc-line{margin-top:6px;font-size:13.5px;font-weight:600;color:var(--t2);line-height:1.4}
+.pc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--t2);background:var(--surface3);border-radius:8px;padding:4px 8px}
+.tag.age{background:#e7f4ec;color:var(--green-dk)}
+.pc.mid .tag.age{background:#fdf0dc;color:var(--amber)}
+.pc.old .tag.age{background:#fde2e2;color:var(--red)}
+.tag.co{background:var(--terra-lt);color:var(--terra-1)}
+.tag.co.mrs{background:var(--small-bg);color:var(--small)}
+.pc-bills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.bchip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12.5px;font-weight:700;padding:5px 9px;border-radius:9px;background:#fff;border:1.5px solid var(--border-strong);color:var(--t2)}
+.bchip input{width:17px;height:17px;margin:0;accent-color:var(--terra-1)}
+.bchip.off{opacity:.45;text-decoration:line-through}
+.pc-note{font-size:12px;color:var(--t3);margin-top:6px}
+.pc-lr{display:flex;gap:8px;margin-top:12px}
+.pc-lr input{flex:1;min-width:0;font-family:var(--mono);font-size:18px;font-weight:700;text-transform:uppercase;padding:12px 12px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--surface2);outline:none;color:var(--text)}
+.pc-lr input::placeholder{text-transform:none;font-weight:500;color:var(--t4)}
+.pc-lr input:focus{border-color:var(--terra-2);background:#fff;box-shadow:0 0 0 3px rgba(196,98,42,.12)}
+.pc-lr input.required-err{border-color:var(--red);background:var(--red-bg)}
+.pc-lr .lr-scan{width:52px}
+.pc-lr .lr-save{padding:0 20px;border-radius:12px}
+.pc-lr .lr-save.ready{background:linear-gradient(135deg,#15803d,#1a7a4a);box-shadow:0 4px 14px rgba(26,122,74,.3)}
+.pc-change{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--terra-1);background:none;border:0;padding:0;cursor:pointer}
+.pc-more{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+/* undo bar and saved list */
+.undo-bar{position:fixed;left:12px;right:12px;bottom:16px;z-index:900;display:flex;align-items:center;gap:10px;background:var(--charcoal);color:var(--cream);border-radius:14px;padding:12px 12px 12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.3);transform:translateY(140%);transition:transform .25s}
+.undo-bar.show{transform:none}
+.undo-bar div{flex:1;min-width:0;font-size:13.5px;line-height:1.35}
+.undo-bar div b{color:#86efac}
+.undo-bar button{border:0;background:#f5e8dc;color:var(--terra-1);font-weight:800;font-size:14px;border-radius:10px;padding:10px 14px;cursor:pointer}
+.sheet-bg{position:fixed;inset:0;background:rgba(20,18,15,.45);z-index:950;display:none}
+.sheet-bg.show{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:78vh;overflow:auto;background:var(--surface);border-radius:20px 20px 0 0;z-index:960;padding:16px 14px 24px;transform:translateY(100%);transition:transform .25s}
+.sheet.show{transform:none}
+.sheet h3{font-size:17px;font-weight:800;margin-bottom:4px}
+.sheet .sub{font-size:12.5px;color:var(--t3);margin-bottom:10px}
+.sv{display:flex;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.sv div{flex:1;min-width:0}
+.sv b{display:block;font-size:14.5px}
+.sv span{font-size:12.5px;color:var(--t3)}
+.sv code{font-family:var(--mono);font-weight:700;color:var(--green-dk)}
+.sv button{border:1.5px solid var(--border-strong);background:#fff;color:var(--t2);font-weight:700;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
+.sv button.armed{background:var(--red);border-color:var(--red);color:#fff}
+.sv.undone{opacity:.5}
+</style>
 <main class="list" id="list">
   <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
 </main>
@@ -40,7 +135,11 @@
 <script src="app.js?v=21"></script>
 <script src="scan.js?v=22"></script>
 <script>
-document.body.insertAdjacentHTML('beforeend', GATE_HTML);
+document.body.insertAdjacentHTML('beforeend', GATE_HTML + `
+<div class="undo-bar" id="undoBar"><div id="undoText"></div><button onclick="undoLast()">↶ UNDO</button></div>
+<div class="sheet-bg" id="sheetBg" onclick="closeSaved()"></div>
+<div class="sheet" id="savedSheet"><h3>LR saved today on this phone</h3><div class="sub">Saved the wrong LR? Press Undo (twice): the bills come back to the list.</div>
+  <div id="savedBody"></div><button class="btn-wide" style="margin-top:14px;width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--surface2);font-weight:700;font-size:15px" onclick="closeSaved()">Close</button></div>`);
 
 const COMPANIES = ['All', 'SNT', 'MRS'];
 let records = [], transports = [], coFilter = 'All';
@@ -50,6 +149,7 @@ function lrTyping(el, key) {
   const at = el.selectionStart, up = el.value.toUpperCase();
   if (up !== el.value) { el.value = up; try { el.setSelectionRange(at, at); } catch (e) {} }
   typed[key].lr = up;
+  const btn = document.getElementById('ls-' + key); if (btn) btn.classList.toggle('ready', !!up.trim());
 }
 const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
 function entry(m) {
@@ -59,7 +159,7 @@ function setT(key, field, value) { typed[key][field] = value; render(); }
 
 $('chips').innerHTML = COMPANIES.map(c =>
   `<button class="chip${c === coFilter ? ' active' : ''}" data-co="${c}" onclick="setCo('${c}')">${c}</button>`).join('');
-function setCo(c) { coFilter = c; document.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
+function setCo(c) { coFilter = c; document.querySelectorAll('#chips .chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
 
 function useBoard(d) {
   records = d.records; transports = d.transports || [];
@@ -70,95 +170,217 @@ function useBoard(d) {
 function applyOp(op) {
   if (op.params.action !== 'lr') return;
   const keys = op.params.keys.split(',');
+  if (!op.params.lr) { restoreBills(keys); return; }          // an undo: the bills come back to the list
   records = records.filter(r => !keys.includes(r.key));
 }
 
-// Bill number order: AD007001, AD007002 … then CASH… then MR… - by the number, not letter by letter.
+// ---- parcels: what one LR covers -------------------------------------------------------------------
+// Bills that left together: the bills combined with a main bill, AND every bill of the same party sent
+// the same day by the same transporter (a party's cash bill and normal bill go on one LR).
+const day = (r) => String(r.dispatchedAt || '').substring(0, 10);
+const norm = (v) => String(v || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+// the same transporter is written many ways ("SAI KRUPA ONLY", "SAIKRUPA TRPT", "AXAR ROADLINE"): one short name
+const TR_NOISE = /\b(TRANSPORT|TRANSPORTS|TRANSPOR|TRPT|TRANS|ROADLINES?|ROADLINE|ROADWAYS|CARGO|LOGISTICS?|CARRIERS?|CARRYING|CARRING|ONLY|CO|COMPANY|PVT|LTD|PRIVATE|LIMITED|SERVICES?|THE|AND|SHREE|SHRI|DOOR|DELIVERY)\b/g;
+const trName = (t) => { const w = norm(t).replace(/(TRANSPORT|TRPT|ROADLINES?)(ONLY)\b/g, ' ').replace(TR_NOISE, ' ').split(/\s+/).filter(x => x.length >= 2 && !/^\d+$/.test(x)); return w.slice(0, 2).join('') || norm(t) || 'NO TRANSPORT'; };
+// grouped once each time the bills change (not on every letter typed in the search)
+let pCache = null;
+function parcels() {
+  if (pCache && pCache.src === records && pCache.len === records.length) return pCache.out;
+  const byMain = {}, out = [], nos = {};
+  records.forEach(r => { nos[r.billNo] = 1; });
+  records.forEach(r => { if (r.sentWith) (byMain[r.sentWith] = byMain[r.sentWith] || []).push(r); });
+  const units = records.filter(r => !r.sentWith || !nos[r.sentWith])
+    .map(m => [m].concat(m.sentWith ? [] : (byMain[m.billNo] || [])));
+  const groups = {};
+  units.forEach(u => {
+    const m = u[0];
+    const k = [m.company, norm(m.party), day(m), trName(m.dispatchTransport)].join('|');
+    (groups[k] = groups[k] || []).push(...u);
+  });
+  Object.keys(groups).forEach(k => {
+    const bills = groups[k].sort((a, b) => billOrder(a.billNo, b.billNo));
+    out.push({ key: bills[0].key, main: bills[0], bills, day: day(bills[0]), tr: trName(bills[0].dispatchTransport),
+               hay: bills.map(b => [b.party, b.billNo, b.city].join(' ')).join(' ').toLowerCase(),
+               nums: bills.map(b => String(b.billNo).replace(/\D/g, '').replace(/^0+/, '')), pn: norm(bills[0].party) });
+  });
+  // oldest dispatch day first (the LR slips in hand are 3-4 days old), then transporter, then party
+  out.sort((a, b) => a.day.localeCompare(b.day) || a.tr.localeCompare(b.tr) || a.pn.localeCompare(b.pn));
+  pCache = { src: records, len: records.length, out };
+  return out;
+}
+function consignments() { return parcels(); }        // the old name, kept
+// Bill number order inside a parcel: AD007001, AD007002 … then CASH… - by the number, not letter by letter.
 function billOrder(a, b) {
   const x = /^([A-Z]*)(\d*)/.exec(String(a || '').toUpperCase()), y = /^([A-Z]*)(\d*)/.exec(String(b || '').toUpperCase());
   return x[1].localeCompare(y[1]) || (parseInt(x[2] || '0', 10) - parseInt(y[2] || '0', 10)) || String(a).localeCompare(String(b));
 }
-// A consignment = the bill that was dispatched + the bills ticked as going together with it.
-function consignments() {
-  const mains = records.filter(r => !r.sentWith);
-  const groups = mains.map(m => ({ main: m, bills: [m].concat(records.filter(r => r.sentWith === m.billNo)) }));
-  records.filter(r => r.sentWith && !mains.some(m => m.billNo === r.sentWith))
-    .forEach(r => groups.push({ main: r, bills: [r] }));
-  return groups;
+const off = {};          // bill key -> true: unticked in its parcel (it went on another LR)
+const trSel = new Set();          // empty = all transport
+let trFilter = 'All';            // (kept for older code: 'All' or the one chosen)
+function trCounts() { const cnt = {}; parcels().filter(g => coFilter === 'All' || g.main.company === coFilter).forEach(g => { cnt[g.tr] = (cnt[g.tr] || 0) + 1; }); return cnt; }
+function drawTrPanel() {
+  const cnt = trCounts(), trs = Object.keys(cnt).sort((a, b) => a.localeCompare(b)), total = Object.values(cnt).reduce((a, b) => a + b, 0);
+  $('trPanel').innerHTML = `<label class="tr-opt"><input type="checkbox" ${trSel.size ? '' : 'checked'} onchange="trSel.clear(); drawTrPanel(); render()">All transport<small>${total}</small></label>` +
+    trs.map(t => `<label class="tr-opt"><input type="checkbox" ${trSel.has(t) ? 'checked' : ''} onchange="pickTr('${esc(t)}', this.checked)">${esc(t)}<small>${cnt[t]}</small></label>`).join('') +
+    `<button class="tr-done" onclick="toggleTr(false)">Done</button>`;
 }
-
+function pickTr(t, on) { if (on) trSel.add(t); else trSel.delete(t); drawTrPanel(); render(); }
+function setTr(t) { trSel.clear(); if (t && t !== 'All') trSel.add(t); render(); }
+function toggleTr(open) {
+  const pnl = $('trPanel'), show = open === undefined ? pnl.hidden : open;
+  if (show) drawTrPanel();
+  pnl.hidden = !show;
+}
+document.addEventListener('click', e => { const pnl = $('trPanel'); if (pnl && !pnl.hidden && !e.target.closest('#trPanel') && !e.target.closest('#trBtn')) pnl.hidden = true; });
+// the search waits only a moment after the last letter, and draws only the first cards
+let findTimer = null, limit = 40, lastSig = '';
+function findSoon() { clearTimeout(findTimer); findTimer = setTimeout(render, 90); }
+function moreCards() { limit += 40; render(); }
+const dayLabel = (iso) => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', ''); };
+const daysAgo = (iso) => Math.round((new Date(new Date().toLocaleDateString('en-CA') + 'T00:00:00') - new Date(iso + 'T00:00:00')) / 86400000);
+const casesOf = (g) => g.bills.filter(b => !off[b.key]).reduce((s, b) => s + (parseInt(b.dispatchCases || b.cases, 10) || 0), 0);
+const showMore = {};
 function render() {
-  const q = $('searchInput').value.trim().toLowerCase();
-  const groups = consignments()
-    .filter(g => coFilter === 'All' || g.main.company === coFilter)
-    .filter(g => !q || g.bills.some(b => [b.party, b.billNo, b.city, b.dispatchTransport].join(' ').toLowerCase().includes(q)))
-    .sort((a, b) => billOrder(a.main.billNo, b.main.billNo));
+  const q = $('searchInput').value.trim().toLowerCase(), qd = q.replace(/\D/g, '').replace(/^0+/, ''), digitsOnly = /^\d{3,}$/.test(q);
+  const all = parcels().filter(g => coFilter === 'All' || g.main.company === coFilter);
+  const live = new Set(all.map(g => g.tr)); [...trSel].forEach(t => { if (!live.has(t)) trSel.delete(t); });
+  trFilter = trSel.size === 1 ? [...trSel][0] : 'All';
+  $('trLabel').textContent = !trSel.size ? 'All transport' : trSel.size === 1 ? [...trSel][0] : [...trSel][0] + ' +' + (trSel.size - 1);
+  $('trBtn').classList.toggle('on', trSel.size > 0);
+  const sig = [q, coFilter, [...trSel].join(',')].join('|'); if (sig !== lastSig) { limit = 40; lastSig = sig; }
+  const groups = all.filter(g => (!trSel.size || trSel.has(g.tr)) &&
+    (!q || g.hay.includes(q) || (digitsOnly && g.nums.some(n => n.endsWith(qd)))));
+  const sel = trSel.size ? ' · ' + esc([...trSel].join(', ')) : '';
   if (!groups.length) {
-    $('list').innerHTML = q
-      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div><div class="empty-sub">Nothing matches "<b>${esc(q)}</b>"</div></div>`
+    $('fSum').innerHTML = `Showing <b>0</b> of ${all.length} LR pending${sel}`;
+    $('list').innerHTML = (q || trSel.size)
+      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No match</div><div class="empty-sub">No pending LR for ${[trSel.size ? esc([...trSel].join(', ')) : '', q ? '"' + esc(q) + '"' : ''].filter(Boolean).join(' · ')}</div></div>`
       : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No LR pending</div></div>`;
     return;
   }
-  $('list').innerHTML = `<div class="sec-label lred">LR PENDING &nbsp;${groups.length} &nbsp;· by bill number</div>` + groups.map(g => {
-    const m = g.main, k = esc(m.key);
-    const cases = g.bills.reduce((s, b) => s + (parseInt(b.dispatchCases || b.cases, 10) || 0), 0);
-    const t = entry(m);
-    const list = transports.slice();
-    if (m.dispatchTransport && !list.includes(m.dispatchTransport)) list.unshift(m.dispatchTransport);
-    const changed = m.dispatchTransport && t.transport !== m.dispatchTransport;
-    return `
-<div class="card" data-id="${k}">
-  <div class="card-head" style="cursor:default">
-    <div class="card-main">
-      <div class="party-name">${esc(m.party)}</div>
-      <div class="cases-row"><span class="cases-badge">📦 ${cases} cases</span></div>
-      <div class="bill-info-row">
-        <span class="co-badge ${coClass(m.company)}">${esc(m.company)}</span>
-        ${g.bills.map(b => `<span class="bill-no-chip">#${esc(b.billNo)}</span>`).join('')}
-        <span class="ic blue">🚛 ${esc(m.dispatchTransport || '—')}</span>
-        ${m.city ? `<span class="ic">📍 ${esc(m.city)}</span>` : ''}
-      </div>
-
-      <div class="field-lbl" style="margin-top:14px">Transport that carried it</div>
-      <select class="t-select" onchange="setT('${k}','transport',this.value)">
-        ${list.map(x => `<option value="${esc(x)}"${x === t.transport ? ' selected' : ''}>${esc(x)}</option>`).join('')}
-        <option value="__other"${t.transport === '__other' ? ' selected' : ''}>Other (type the name)…</option>
-      </select>
-      ${t.transport === '__other' ? `<input class="t-input" style="margin-top:8px" placeholder="Transport name" value="${esc(t.other)}" oninput="typed['${k}'].other=this.value">` : ''}
-      <div class="t-warn${changed ? ' show' : ''}">⚠ Gate marked: <b>${esc(m.dispatchTransport || 'None')}</b></div>
-
-      <div class="field-lbl" style="margin-top:14px">Dispatch date</div>
-      <input class="t-input" type="date" id="dt-${k}" value="${esc(t.date)}" max="${new Date().toLocaleDateString('en-CA')}" onchange="typed['${k}'].date=this.value">
-
-      <div class="field-lbl" style="margin-top:14px">LR number</div>
-      <div class="lr-row" style="margin-top:0">
-        <input class="t-input" id="lr-${k}" placeholder="LR number" value="${esc(t.lr)}" autocomplete="off" autocapitalize="characters"
-          oninput="lrTyping(this,'${k}')" onkeydown="if(event.key==='Enter')saveLr('${k}')">
-        ${canScan ? `<button class="lr-scan" onclick="openScan('${k}')" aria-label="Scan LR QR or barcode">📷</button>` : ''}
-        <button class="lr-save" id="ls-${k}" onclick="saveLr('${k}')">Save</button>
-      </div>
-    </div>
+  const perDay = {}; groups.forEach(g => { perDay[g.day] = (perDay[g.day] || 0) + 1; });
+  const shown = groups.slice(0, limit);
+  let h = '', lastDay = '', lastTr = '';
+  shown.forEach(g => {
+    if (g.day !== lastDay) { const a = daysAgo(g.day); h += `<div class="day-head"><b>${esc(dayLabel(g.day))}</b><span>${perDay[g.day]} LR pending · sent ${a} day${a === 1 ? '' : 's'} ago</span><i></i></div>`; lastDay = g.day; lastTr = ''; }
+    if (g.tr !== lastTr && trSel.size !== 1) { h += `<div class="tr-head">🚛 ${esc(g.tr)}</div>`; lastTr = g.tr; }
+    h += card(g);
+  });
+  if (groups.length > shown.length) h += `<button class="more-btn" onclick="moreCards()">Show more (${groups.length - shown.length} more) - or type in the search</button>`;
+  $('list').innerHTML = h;
+  $('fSum').innerHTML = `Showing <b>${groups.length}</b> of ${all.length} LR pending${sel}`;
+}
+function card(g) {
+  const m = g.main, k = esc(g.key), t = entry(m), age = daysAgo(g.day);
+  const list = transports.slice();
+  if (m.dispatchTransport && !list.includes(m.dispatchTransport)) list.unshift(m.dispatchTransport);
+  const changed = m.dispatchTransport && t.transport !== m.dispatchTransport;
+  const multi = g.bills.length > 1;
+  const cls = age >= 7 ? 'old' : age >= 4 ? 'mid' : '';
+  return `
+<div class="card pc ${cls}" data-id="${k}">
+  <div class="pc-top">
+    <div class="pc-name party-name" style="margin:0;font-size:17.5px">${esc(m.party)}</div>
+    <div class="pc-cases p-cases"><b>${casesOf(g)}</b><small>cases</small></div>
   </div>
+  <div class="pc-line">${m.city ? '📍 ' + esc(m.city) + ' &nbsp;·&nbsp; ' : ''}🚛 ${esc(m.dispatchTransport || '—')}</div>
+  <div class="pc-meta">
+    <span class="tag age">📅 Sent ${esc(dayLabel(g.day))}${age >= 1 ? ' · ' + age + ' day' + (age === 1 ? '' : 's') : ''}</span>
+    ${m.company && m.company !== 'SNT' ? `<span class="tag co mrs">${esc(m.company)}</span>` : ''}
+  </div>
+  <div class="pc-bills">${g.bills.map(b => multi
+    ? `<label class="bchip p-bill${off[b.key] ? ' off' : ''}"><input type="checkbox" ${off[b.key] ? '' : 'checked'} onchange="off['${esc(b.key)}']=!this.checked; render()">${esc(b.billNo)}</label>`
+    : `<span class="bchip p-bill">${esc(b.billNo)}</span>`).join('')}</div>
+  ${multi ? `<div class="pc-note">${g.bills.length} bills on one LR · untick a bill that went on another LR</div>` : ''}
+  <div class="pc-lr lr-row">
+    <input id="lr-${k}" placeholder="Type LR number" value="${esc(t.lr)}" autocomplete="off" autocapitalize="characters" enterkeyhint="done"
+      oninput="lrTyping(this,'${k}')" onkeydown="if(event.key==='Enter')saveLr('${k}')">
+    ${canScan ? `<button class="lr-scan" onclick="openScan('${k}')" aria-label="Scan LR QR or barcode">📷</button>` : ''}
+    <button class="lr-save${t.lr ? ' ready' : ''}" id="ls-${k}" onclick="saveLr('${k}')">Save</button>
+  </div>
+  ${showMore[g.key] ? `<div class="pc-more">
+    <div class="field-lbl">Transport that carried it</div>
+    <select class="t-select" onchange="setT('${k}','transport',this.value)">
+      ${list.map(x => `<option value="${esc(x)}"${x === t.transport ? ' selected' : ''}>${esc(x)}</option>`).join('')}
+      <option value="__other"${t.transport === '__other' ? ' selected' : ''}>Other (type the name)…</option>
+    </select>
+    ${t.transport === '__other' ? `<input class="t-input" style="margin-top:8px" placeholder="Transport name" value="${esc(t.other)}" oninput="typed['${k}'].other=this.value">` : ''}
+    <div class="t-warn${changed ? ' show' : ''}">⚠ Gate marked: <b>${esc(m.dispatchTransport || 'None')}</b></div>
+    <div class="field-lbl" style="margin-top:12px">Dispatch date</div>
+    <input class="t-input" type="date" id="dt-${k}" value="${esc(t.date)}" max="${new Date().toLocaleDateString('en-CA')}" onchange="typed['${k}'].date=this.value"></div>`
+    : `<button class="pc-change p-change" onclick="showMore['${k}']=1; render()">Different transport or date?</button>`}
 </div>`;
-  }).join('');
+}
+
+// ---- undo: every LR saved on this phone today can be taken back ------------------------------------
+const SAVED_KEY = 'lrSaved';
+const todayIso = () => new Date().toLocaleDateString('en-CA');
+function savedList() { let v = []; try { v = JSON.parse(store.get(SAVED_KEY) || '[]'); } catch (e) { v = []; } return v.filter(x => x.day === todayIso()); }
+function putSaved(v) { try { store.set(SAVED_KEY, JSON.stringify(v.slice(-200))); } catch (e) { } drawSavedCount(); }
+function drawSavedCount() { const n = savedList().filter(x => !x.undone).length; if ($('savedN')) $('savedN').textContent = n; }
+const parked = {};          // bill key -> the bill as it was before its LR was saved (to put back on undo)
+function restoreBills(keys) {
+  const kept = {}; savedList().forEach(x => (x.parked || []).forEach(b => { kept[b.key] = b; }));      // also after the page was reopened
+  keys.forEach(k => { const b = parked[k] || kept[k]; if (b && !records.some(r => r.key === k)) records.push(Object.assign({}, b, { lrNo: '' })); });
+  pCache = null;
+}
+let undoTimer = null, lastSaved = null;
+function showUndo(item) {
+  lastSaved = item;
+  $('undoText').innerHTML = `✓ LR <b>${esc(item.lr)}</b> saved<br>${esc(item.party)} · ${esc(item.bills.join(', '))}`;
+  $('undoBar').classList.add('show');
+  clearTimeout(undoTimer); undoTimer = setTimeout(() => $('undoBar').classList.remove('show'), 9000);
+}
+function undoLast() { $('undoBar').classList.remove('show'); if (lastSaved) undoSaved(lastSaved.id, true); }
+let armedUndo = '';
+function undoSaved(id, now) {
+  const v = savedList(), item = v.find(x => x.id === id);
+  if (!item || item.undone) return;
+  if (!now && armedUndo !== id) { armedUndo = id; drawSaved(); return; }      // in the list: press twice
+  armedUndo = '';
+  item.parked.forEach(b => { parked[b.key] = b; });
+  enqueue({ action: 'lr', keys: item.keys.join(','), lr: '', by: store.get('name') }, 'Undo LR ' + item.lr);
+  item.undone = true; putSaved(v);
+  render(); drawSaved();
+  toast('↶ LR ' + item.lr + ' taken back · ' + item.bills.join(', ') + ' back in the list', 'ok');
+}
+function openSaved() { drawSaved(); $('sheetBg').classList.add('show'); $('savedSheet').classList.add('show'); }
+function closeSaved() { $('sheetBg').classList.remove('show'); $('savedSheet').classList.remove('show'); armedUndo = ''; }
+function drawSaved() {
+  const v = savedList().slice().reverse();
+  $('savedBody').innerHTML = v.length ? v.map(x => `<div class="sv${x.undone ? ' undone' : ''}"><div><b>${esc(x.party)}</b>
+      <span><code>${esc(x.lr)}</code> · ${esc(x.bills.join(', '))} · ${esc(x.time)}</span></div>
+      ${x.undone ? '<span>taken back</span>' : `<button class="${armedUndo === x.id ? 'armed' : ''}" onclick="undoSaved('${esc(x.id)}')">${armedUndo === x.id ? 'Press again' : '↶ Undo'}</button>`}</div>`).join('')
+    : '<div class="sub" style="padding:14px 0">Nothing saved on this phone today.</div>';
 }
 
 function saveLr(key) {
-  const g = consignments().find(x => x.main.key === key);
+  const g = parcels().find(x => x.key === key);
+  if (!g) { toast('This LR is no longer pending - pull to refresh', 'err'); return; }
   const t = entry(g.main);
+  const bills0 = g.bills.filter(b => !off[b.key]);
+  if (!bills0.length) { toast('Tick at least one bill', 'err'); return; }
   const input = document.getElementById('lr-' + key), lr = upLr(input.value);
   const transport = t.transport === '__other' ? t.other.trim() : t.transport;
   if (!lr) { input.classList.add('required-err'); toast('Type the LR number', 'err'); return; }
   if (!transport) { toast('Choose the transport', 'err'); return; }
   if (!t.date) { document.getElementById('dt-' + key).classList.add('required-err'); toast('Choose the dispatch date', 'err'); return; }
-  const bills = g.bills.map(b => '#' + b.billNo).join(', ');
-  delete typed[key];
-  enqueue({ action: 'lr', keys: g.bills.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') }, 'LR for ' + bills);
+  const bills = bills0.map(b => '#' + b.billNo).join(', ');
+  delete typed[key]; delete showMore[key];
+  enqueue({ action: 'lr', keys: bills0.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') }, 'LR for ' + bills);
+  const item = { id: Date.now().toString(36), day: todayIso(), time: new Date().toTimeString().substring(0, 5), lr, party: g.main.party,
+                 bills: bills0.map(b => b.billNo), keys: bills0.map(b => b.key), parked: bills0.map(b => Object.assign({}, b)) };
+  const v = savedList(); v.push(item); putSaved(v);
+  showUndo(item);
+  g.bills.forEach(b => { delete off[b.key]; });      // an unticked bill comes back as its own LR, fully ticked
   render();
-  toast('✓ LR saved for ' + bills, 'ok');
+  // next slip: clear the cases and search, keep the transporter chosen
+  $('searchInput').value = ''; render();
+
 }
 
 startApp('lr', useBoard);
+drawSavedCount();
 // new dispatches from the gate appear by themselves (what is typed is kept - see "typed")
 setInterval(() => { if (!document.hidden && !sending && store.get('name')) loadData(); }, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && store.get('name')) loadData(); });
