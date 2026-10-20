@@ -33,8 +33,12 @@
   </div>
   <div class="f-find">
     <div class="f-search"><span>🔍</span><input type="search" id="searchInput" placeholder="Party, city or bill no" oninput="findSoon()" autocomplete="off"/></div>
-    <button class="f-tr-btn" id="trBtn" onclick="toggleTr()"><span id="trLabel">All transport</span> ▾</button>
-    <div class="tr-panel" id="trPanel" hidden></div>
+  </div>
+  <div class="f-drops">
+    <button class="f-tr-btn" id="trBtn" onclick="toggleF('tr')"><small>Transport ▾</small><span id="trLabel">All</span></button>
+    <button class="f-tr-btn" id="ddBtn" onclick="toggleF('dd')"><small>Dispatch date ▾</small><span id="ddLabel">All</span></button>
+    <button class="f-tr-btn" id="bdBtn" onclick="toggleF('bd')"><small>Bill date ▾</small><span id="bdLabel">All</span></button>
+    <div class="tr-panel" id="trPanel" hidden></div><div class="tr-panel" id="ddPanel" hidden></div><div class="tr-panel" id="bdPanel" hidden></div>
   </div>
   <div class="f-sum" id="fSum"></div>
 </section>
@@ -52,14 +56,18 @@
 .f-tr .chip small{font-size:11.5px;font-weight:700;background:var(--surface3);color:var(--t2);border-radius:8px;padding:1px 6px}
 .f-tr .chip.active small{background:rgba(255,255,255,.25);color:#fff}
 .f-find{display:flex;gap:8px;margin-top:10px;position:relative}
-.f-tr-btn{flex:0 0 auto;max-width:46%;display:flex;align-items:center;gap:4px;border:1.5px solid var(--border);background:var(--surface2);border-radius:12px;padding:0 12px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden}
-.f-tr-btn span{overflow:hidden;text-overflow:ellipsis}
+.f-drops{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px;position:relative}
+.f-tr-btn{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1.5px solid var(--border);background:var(--surface2);border-radius:12px;padding:6px 10px 7px;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;white-space:nowrap;overflow:hidden;text-align:left;font-family:inherit}
+.f-tr-btn small{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--t3)}
+.f-tr-btn span{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.f-tr-btn.on small{color:var(--terra-1)}
 .f-tr-btn.on{border-color:var(--terra-1);background:var(--terra-xlt);color:var(--terra-1)}
-.tr-panel{position:absolute;right:0;top:calc(100% + 6px);width:min(300px,92vw);max-height:60vh;overflow:auto;background:#fff;border:1.5px solid var(--border-strong);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.18);z-index:300;padding:6px}
+.tr-panel{position:absolute;left:0;right:0;top:calc(100% + 6px);max-height:60vh;overflow:auto;background:#fff;border:1.5px solid var(--border-strong);border-radius:14px;box-shadow:0 14px 34px rgba(0,0,0,.18);z-index:300;padding:6px}
 .tr-panel[hidden]{display:none}
 .tr-opt{display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
 .tr-opt:active{background:var(--surface3)}
 .tr-opt input{width:20px;height:20px;accent-color:var(--terra-1);margin:0}
+.tr-opt em{font-style:normal;color:var(--t3);font-size:12.5px;font-weight:600;margin-left:4px}
 .tr-opt small{margin-left:auto;font-size:12px;font-weight:700;color:var(--t3);background:var(--surface3);border-radius:8px;padding:1px 7px}
 .tr-done{position:sticky;bottom:0;width:100%;margin-top:4px;padding:11px;border:0;border-radius:10px;background:var(--charcoal);color:var(--cream);font-weight:700;font-size:15px;cursor:pointer}
 .more-btn{display:block;width:100%;margin:6px 0 14px;padding:13px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--surface);font-weight:700;font-size:14.5px;color:var(--t2);cursor:pointer}
@@ -127,6 +135,9 @@
 .sv button{border:1.5px solid var(--border-strong);background:#fff;color:var(--t2);font-weight:700;border-radius:10px;padding:8px 12px;cursor:pointer;white-space:nowrap}
 .sv button.armed{background:var(--red);border-color:var(--red);color:#fff}
 .sv.undone{opacity:.5}
+.sv-find{width:100%;font-size:16px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface2);font-family:inherit;outline:none;margin-bottom:4px}
+.pc-dup{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fdecea;border:1.5px solid #f3b4ad;color:#9b1c1c;font-size:13.5px;line-height:1.4;font-weight:600}
+.lr-save.dup{background:var(--red)!important;border-color:var(--red)!important;color:#fff!important}
 </style>
 <main class="list" id="list">
   <div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Connecting…</div><div class="empty-sub">Please wait</div></div>
@@ -138,7 +149,8 @@
 document.body.insertAdjacentHTML('beforeend', GATE_HTML + `
 <div class="undo-bar" id="undoBar"><div id="undoText"></div><button onclick="undoLast()">↶ UNDO</button></div>
 <div class="sheet-bg" id="sheetBg" onclick="closeSaved()"></div>
-<div class="sheet" id="savedSheet"><h3>LR saved today on this phone</h3><div class="sub">Saved the wrong LR? Press Undo (twice): the bills come back to the list.</div>
+<div class="sheet" id="savedSheet"><h3>LR saved today - everyone</h3><div class="sub">From every phone. Saved the wrong LR? Press Undo (twice): the bills come back to the list.</div>
+  <input class="sv-find" id="savedFind" type="search" placeholder="Find party, LR or bill no" oninput="drawSaved()" autocomplete="off">
   <div id="savedBody"></div><button class="btn-wide" style="margin-top:14px;width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--surface2);font-weight:700;font-size:15px" onclick="closeSaved()">Close</button></div>`);
 
 const COMPANIES = ['All', 'SNT', 'MRS'];
@@ -150,7 +162,9 @@ function lrTyping(el, key) {
   if (up !== el.value) { el.value = up; try { el.setSelectionRange(at, at); } catch (e) {} }
   typed[key].lr = up;
   const btn = document.getElementById('ls-' + key); if (btn) btn.classList.toggle('ready', !!up.trim());
+  if (dup[key] && dup[key].lr !== up && btn) { btn.classList.remove('dup'); btn.textContent = 'Save'; const w = document.getElementById('dw-' + key); if (w) w.remove(); }
 }
+const dup = {};     // parcel key -> { lr, party, bills }: that LR is already on another party today
 const typed = {};   // consignment key -> { lr, transport, other, date } as being entered
 function entry(m) {
   return typed[m.key] || (typed[m.key] = { lr: '', transport: m.dispatchTransport || '', other: '', date: String(m.dispatchedAt).substring(0, 10) });
@@ -161,9 +175,13 @@ $('chips').innerHTML = COMPANIES.map(c =>
   `<button class="chip${c === coFilter ? ' active' : ''}" data-co="${c}" onclick="setCo('${c}')">${c}</button>`).join('');
 function setCo(c) { coFilter = c; document.querySelectorAll('#chips .chip').forEach(b => b.classList.toggle('active', b.dataset.co === c)); render(); }
 
+let srvSaved = {};          // bill key -> the bill with its LR saved today (from the sheet, by anyone, plus saves made here)
 function useBoard(d) {
   records = d.records; transports = d.transports || [];
+  if (d.savedToday) { srvSaved = {}; d.savedToday.forEach(r => { srvSaved[r.key] = r; }); }
+  pCache = null;
   applyPending();
+  drawSavedCount();
   safeRender();
 }
 // An LR saved here but not yet confirmed by the sheet: those bills leave the list straight away.
@@ -171,7 +189,16 @@ function applyOp(op) {
   if (op.params.action !== 'lr') return;
   const keys = op.params.keys.split(',');
   if (!op.params.lr) { restoreBills(keys); return; }          // an undo: the bills come back to the list
+  const at = (op.local && op.local.at) || nowLocal(), p = op.params;
+  keys.forEach(k => {
+    const r = records.find(x => x.key === k) || srvSaved[k]; if (!r) return;
+    const o = Object.assign({}, r, { lrNo: p.lr, lrBy: p.by || '', lrAt: at });
+    if (p.transport) o.dispatchTransport = p.transport;
+    if (p.date && String(o.dispatchedAt || '').length >= 10) o.dispatchedAt = p.date + String(o.dispatchedAt).substring(10);
+    srvSaved[k] = o;
+  });
   records = records.filter(r => !keys.includes(r.key));
+  drawSavedCount();
 }
 
 // ---- parcels: what one LR covers -------------------------------------------------------------------
@@ -201,37 +228,57 @@ function parcels() {
     const bills = groups[k].sort((a, b) => billOrder(a.billNo, b.billNo));
     out.push({ key: bills[0].key, main: bills[0], bills, day: day(bills[0]), tr: trName(bills[0].dispatchTransport),
                hay: bills.map(b => [b.party, b.billNo, b.city].join(' ')).join(' ').toLowerCase(),
-               nums: bills.map(b => String(b.billNo).replace(/\D/g, '').replace(/^0+/, '')), pn: norm(bills[0].party) });
+               nums: bills.map(b => String(b.billNo).replace(/\D/g, '').replace(/^0+/, '')), pn: norm(bills[0].party),
+               bdays: [...new Set(bills.map(b => bIso(b.billDate)).filter(Boolean))] });
   });
-  // oldest dispatch day first (the LR slips in hand are 3-4 days old), then transporter, then party
-  out.sort((a, b) => a.day.localeCompare(b.day) || a.tr.localeCompare(b.tr) || a.pn.localeCompare(b.pn));
+  // bill number order: AD bills, then CASH, then MR (a parcel with an AD and a cash bill sits at its AD bill)
+  out.sort((a, b) => billOrder(a.main.billNo, b.main.billNo) || a.day.localeCompare(b.day));
   pCache = { src: records, len: records.length, out };
   return out;
 }
 function consignments() { return parcels(); }        // the old name, kept
-// Bill number order inside a parcel: AD007001, AD007002 … then CASH… - by the number, not letter by letter.
+// Bill number order: AD007001, AD007002 … then CASH… then MR… - by the number, not letter by letter.
+const sRank = (no) => { const v = String(no || '').toUpperCase(); return /^AD/.test(v) ? 0 : /^CA/.test(v) ? 1 : /^MR/.test(v) ? 2 : 3; };
+const bIso = (v) => { const m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/.exec(String(v || '').trim()); return m ? m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2) : (/^\d{4}-\d{2}-\d{2}/.test(String(v || '')) ? String(v).substring(0, 10) : ''); };
+const nowLocal = () => new Date().toLocaleDateString('en-CA') + ' ' + new Date().toTimeString().substring(0, 8);
 function billOrder(a, b) {
   const x = /^([A-Z]*)(\d*)/.exec(String(a || '').toUpperCase()), y = /^([A-Z]*)(\d*)/.exec(String(b || '').toUpperCase());
-  return x[1].localeCompare(y[1]) || (parseInt(x[2] || '0', 10) - parseInt(y[2] || '0', 10)) || String(a).localeCompare(String(b));
+  return (sRank(a) - sRank(b)) || x[1].localeCompare(y[1]) || (parseInt(x[2] || '0', 10) - parseInt(y[2] || '0', 10)) || String(a).localeCompare(String(b));
 }
 const off = {};          // bill key -> true: unticked in its parcel (it went on another LR)
 const trSel = new Set();          // empty = all transport
 let trFilter = 'All';            // (kept for older code: 'All' or the one chosen)
-function trCounts() { const cnt = {}; parcels().filter(g => coFilter === 'All' || g.main.company === coFilter).forEach(g => { cnt[g.tr] = (cnt[g.tr] || 0) + 1; }); return cnt; }
-function drawTrPanel() {
-  const cnt = trCounts(), trs = Object.keys(cnt).sort((a, b) => a.localeCompare(b)), total = Object.values(cnt).reduce((a, b) => a + b, 0);
-  $('trPanel').innerHTML = `<label class="tr-opt"><input type="checkbox" ${trSel.size ? '' : 'checked'} onchange="trSel.clear(); drawTrPanel(); render()">All transport<small>${total}</small></label>` +
-    trs.map(t => `<label class="tr-opt"><input type="checkbox" ${trSel.has(t) ? 'checked' : ''} onchange="pickTr('${esc(t)}', this.checked)">${esc(t)}<small>${cnt[t]}</small></label>`).join('') +
-    `<button class="tr-done" onclick="toggleTr(false)">Done</button>`;
+const shortDay = (iso) => { const d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }); };
+// three dropdowns, each can pick several: Transport, Dispatch date, Bill date (nothing ticked = all)
+const FIL = {
+  tr: { sel: trSel, vals: g => [g.tr], show: v => v, opt: v => esc(v), all: 'All transport', sort: (a, b) => a.localeCompare(b) },
+  dd: { sel: new Set(), vals: g => [g.day], show: shortDay, opt: v => { const a = daysAgo(v); return esc(dayLabel(v)) + ` <em>${a <= 0 ? 'today' : a + ' day' + (a === 1 ? '' : 's') + ' ago'}</em>`; }, all: 'All dispatch dates', sort: (a, b) => b.localeCompare(a) },
+  bd: { sel: new Set(), vals: g => g.bdays, show: shortDay, opt: v => esc(dayLabel(v)), all: 'All bill dates', sort: (a, b) => b.localeCompare(a) },
+};
+const passes = (g, skip) => Object.keys(FIL).every(n => n === skip || !FIL[n].sel.size || FIL[n].vals(g).some(v => FIL[n].sel.has(v)));
+const coParcels = () => parcels().filter(g => coFilter === 'All' || g.main.company === coFilter);
+function drawPanel(n) {
+  const f = FIL[n], cnt = {}, base = coParcels().filter(g => passes(g, n));
+  base.forEach(g => [...new Set(f.vals(g))].forEach(v => { cnt[v] = (cnt[v] || 0) + 1; }));
+  [...f.sel].forEach(v => { if (!(v in cnt)) cnt[v] = 0; });
+  const vs = Object.keys(cnt).sort(f.sort);
+  $(n + 'Panel').innerHTML = `<label class="tr-opt"><input type="checkbox" ${f.sel.size ? '' : 'checked'} onchange="FIL.${n}.sel.clear(); drawPanel('${n}'); render()">${f.all}<small>${base.length}</small></label>` +
+    vs.map(v => `<label class="tr-opt"><input type="checkbox" ${f.sel.has(v) ? 'checked' : ''} onchange="pickF('${n}', '${esc(v)}', this.checked)"><span>${f.opt(v)}</span><small>${cnt[v]}</small></label>`).join('') +
+    `<button class="tr-done" onclick="toggleF('${n}', false)">Done</button>`;
 }
-function pickTr(t, on) { if (on) trSel.add(t); else trSel.delete(t); drawTrPanel(); render(); }
-function setTr(t) { trSel.clear(); if (t && t !== 'All') trSel.add(t); render(); }
-function toggleTr(open) {
-  const pnl = $('trPanel'), show = open === undefined ? pnl.hidden : open;
-  if (show) drawTrPanel();
+function pickF(n, v, on) { if (on) FIL[n].sel.add(v); else FIL[n].sel.delete(v); drawPanel(n); render(); }
+function toggleF(n, open) {
+  const pnl = $(n + 'Panel'), show = open === undefined ? pnl.hidden : open;
+  Object.keys(FIL).forEach(o => { if (o !== n) $(o + 'Panel').hidden = true; });
+  if (show) drawPanel(n);
   pnl.hidden = !show;
 }
-document.addEventListener('click', e => { const pnl = $('trPanel'); if (pnl && !pnl.hidden && !e.target.closest('#trPanel') && !e.target.closest('#trBtn')) pnl.hidden = true; });
+// the older names, kept
+function drawTrPanel() { drawPanel('tr'); }
+function pickTr(t, on) { pickF('tr', t, on); }
+function setTr(t) { trSel.clear(); if (t && t !== 'All') trSel.add(t); render(); }
+function toggleTr(open) { toggleF('tr', open); }
+document.addEventListener('click', e => { if (e.target.closest('.tr-panel') || e.target.closest('.f-tr-btn')) return; Object.keys(FIL).forEach(n => { const p = $(n + 'Panel'); if (p) p.hidden = true; }); });
 // the search waits only a moment after the last letter, and draws only the first cards
 let findTimer = null, limit = 40, lastSig = '';
 function findSoon() { clearTimeout(findTimer); findTimer = setTimeout(render, 90); }
@@ -242,33 +289,31 @@ const casesOf = (g) => g.bills.filter(b => !off[b.key]).reduce((s, b) => s + (pa
 const showMore = {};
 function render() {
   const q = $('searchInput').value.trim().toLowerCase(), qd = q.replace(/\D/g, '').replace(/^0+/, ''), digitsOnly = /^\d{3,}$/.test(q);
-  const all = parcels().filter(g => coFilter === 'All' || g.main.company === coFilter);
-  const live = new Set(all.map(g => g.tr)); [...trSel].forEach(t => { if (!live.has(t)) trSel.delete(t); });
+  const all = coParcels();
+  Object.keys(FIL).forEach(n => {           // a choice that no longer has any LR pending is dropped
+    const f = FIL[n], live = new Set(); all.forEach(g => f.vals(g).forEach(v => live.add(v)));
+    [...f.sel].forEach(v => { if (!live.has(v)) f.sel.delete(v); });
+    const v = [...f.sel].sort(f.sort);
+    $(n + 'Label').textContent = !v.length ? 'All' : f.show(v[0]) + (v.length > 1 ? ' +' + (v.length - 1) : '');
+    $(n + 'Btn').classList.toggle('on', v.length > 0);
+  });
   trFilter = trSel.size === 1 ? [...trSel][0] : 'All';
-  $('trLabel').textContent = !trSel.size ? 'All transport' : trSel.size === 1 ? [...trSel][0] : [...trSel][0] + ' +' + (trSel.size - 1);
-  $('trBtn').classList.toggle('on', trSel.size > 0);
-  const sig = [q, coFilter, [...trSel].join(',')].join('|'); if (sig !== lastSig) { limit = 40; lastSig = sig; }
-  const groups = all.filter(g => (!trSel.size || trSel.has(g.tr)) &&
-    (!q || g.hay.includes(q) || (digitsOnly && g.nums.some(n => n.endsWith(qd)))));
-  const sel = trSel.size ? ' · ' + esc([...trSel].join(', ')) : '';
+  const sig = [q, coFilter].concat(Object.keys(FIL).map(n => [...FIL[n].sel].join(','))).join('|'); if (sig !== lastSig) { limit = 40; lastSig = sig; }
+  const groups = all.filter(g => passes(g) && (!q || g.hay.includes(q) || (digitsOnly && g.nums.some(n => n.endsWith(qd)))));
+  const picked = Object.keys(FIL).filter(n => FIL[n].sel.size).map(n => [...FIL[n].sel].sort(FIL[n].sort).map(FIL[n].show).join(', '));
+  const sel = picked.length ? ' · ' + esc(picked.join(' · ')) : '';
   if (!groups.length) {
     $('fSum').innerHTML = `Showing <b>0</b> of ${all.length} LR pending${sel}`;
-    $('list').innerHTML = (q || trSel.size)
-      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No match</div><div class="empty-sub">No pending LR for ${[trSel.size ? esc([...trSel].join(', ')) : '', q ? '"' + esc(q) + '"' : ''].filter(Boolean).join(' · ')}</div></div>`
+    $('list').innerHTML = (q || picked.length)
+      ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No match</div><div class="empty-sub">No pending LR for ${esc(picked.concat(q ? ['"' + q + '"'] : []).join(' · '))}</div></div>`
       : `<div class="empty"><div class="empty-icon">✅</div><div class="empty-title">All clear!</div><div class="empty-sub">No LR pending</div></div>`;
     return;
   }
-  const perDay = {}; groups.forEach(g => { perDay[g.day] = (perDay[g.day] || 0) + 1; });
   const shown = groups.slice(0, limit);
-  let h = '', lastDay = '', lastTr = '';
-  shown.forEach(g => {
-    if (g.day !== lastDay) { const a = daysAgo(g.day); h += `<div class="day-head"><b>${esc(dayLabel(g.day))}</b><span>${perDay[g.day]} LR pending · sent ${a} day${a === 1 ? '' : 's'} ago</span><i></i></div>`; lastDay = g.day; lastTr = ''; }
-    if (g.tr !== lastTr && trSel.size !== 1) { h += `<div class="tr-head">🚛 ${esc(g.tr)}</div>`; lastTr = g.tr; }
-    h += card(g);
-  });
+  let h = shown.map(card).join('');
   if (groups.length > shown.length) h += `<button class="more-btn" onclick="moreCards()">Show more (${groups.length - shown.length} more) - or type in the search</button>`;
   $('list').innerHTML = h;
-  $('fSum').innerHTML = `Showing <b>${groups.length}</b> of ${all.length} LR pending${sel}`;
+  $('fSum').innerHTML = `Showing <b>${groups.length}</b> of ${all.length} LR pending · in bill no order${sel}`;
 }
 function card(g) {
   const m = g.main, k = esc(g.key), t = entry(m), age = daysAgo(g.day);
@@ -285,7 +330,8 @@ function card(g) {
   </div>
   <div class="pc-line">${m.city ? '📍 ' + esc(m.city) + ' &nbsp;·&nbsp; ' : ''}🚛 ${esc(m.dispatchTransport || '—')}</div>
   <div class="pc-meta">
-    <span class="tag age">📅 Sent ${esc(dayLabel(g.day))}${age >= 1 ? ' · ' + age + ' day' + (age === 1 ? '' : 's') : ''}</span>
+    <span class="tag age">🚚 Sent ${esc(dayLabel(g.day))}${age >= 1 ? ' · ' + age + ' day' + (age === 1 ? '' : 's') : ''}</span>
+    ${g.bdays.length ? `<span class="tag bdate">🧾 Bill ${esc(g.bdays.slice().sort().map(shortDay).join(', '))}</span>` : ''}
     ${m.company && m.company !== 'SNT' ? `<span class="tag co mrs">${esc(m.company)}</span>` : ''}
   </div>
   <div class="pc-bills">${g.bills.map(b => multi
@@ -296,8 +342,9 @@ function card(g) {
     <input id="lr-${k}" placeholder="Type LR number" value="${esc(t.lr)}" autocomplete="off" autocapitalize="characters" enterkeyhint="done"
       oninput="lrTyping(this,'${k}')" onkeydown="if(event.key==='Enter')saveLr('${k}')">
     ${canScan ? `<button class="lr-scan" onclick="openScan('${k}')" aria-label="Scan LR QR or barcode">📷</button>` : ''}
-    <button class="lr-save${t.lr ? ' ready' : ''}" id="ls-${k}" onclick="saveLr('${k}')">Save</button>
+    <button class="lr-save${t.lr ? ' ready' : ''}${dup[g.key] && dup[g.key].lr === t.lr ? ' dup' : ''}" id="ls-${k}" onclick="saveLr('${k}')">${dup[g.key] && dup[g.key].lr === t.lr ? 'Save anyway' : 'Save'}</button>
   </div>
+  ${dup[g.key] && dup[g.key].lr === t.lr ? `<div class="pc-dup" id="dw-${k}">⚠ LR <b>${esc(t.lr)}</b> is already saved today for <b>${esc(dup[g.key].party)}</b> (${esc(dup[g.key].bills)}). Check the slip. If it is right, press <b>Save anyway</b>.</div>` : ''}
   ${showMore[g.key] ? `<div class="pc-more">
     <div class="field-lbl">Transport that carried it</div>
     <select class="t-select" onchange="setT('${k}','transport',this.value)">
@@ -312,17 +359,24 @@ function card(g) {
 </div>`;
 }
 
-// ---- undo: every LR saved on this phone today can be taken back ------------------------------------
-const SAVED_KEY = 'lrSaved';
+// ---- saved today: every LR saved today, on any phone (the sheet sends them); anyone can take one back
 const todayIso = () => new Date().toLocaleDateString('en-CA');
-function savedList() { let v = []; try { v = JSON.parse(store.get(SAVED_KEY) || '[]'); } catch (e) { v = []; } return v.filter(x => x.day === todayIso()); }
-function putSaved(v) { try { store.set(SAVED_KEY, JSON.stringify(v.slice(-200))); } catch (e) { } drawSavedCount(); }
-function drawSavedCount() { const n = savedList().filter(x => !x.undone).length; if ($('savedN')) $('savedN').textContent = n; }
+let savedNow = [];
+function savedGroups() {
+  const by = {};
+  Object.values(srvSaved).forEach(r => { if (!r.lrNo) return;
+    const k = upLr(r.lrNo) + '|' + r.lrAt + '|' + norm(r.party); (by[k] = by[k] || []).push(r); });
+  return Object.keys(by).map(k => { const rs = by[k].sort((a, b) => billOrder(a.billNo, b.billNo));
+    return { id: k, lr: rs[0].lrNo, party: rs[0].party, by: rs[0].lrBy || '', at: String(rs[0].lrAt), time: String(rs[0].lrAt).substring(11, 16),
+             bills: rs.map(r => r.billNo), keys: rs.map(r => r.key), cases: rs.reduce((s, r) => s + (parseInt(r.dispatchCases || r.cases, 10) || 0), 0) }; })
+    .sort((a, b) => b.at.localeCompare(a.at) || billOrder(a.bills[0], b.bills[0]));
+}
+function drawSavedCount() { if ($('savedN')) $('savedN').textContent = savedGroups().length; }
 const parked = {};          // bill key -> the bill as it was before its LR was saved (to put back on undo)
 function restoreBills(keys) {
-  const kept = {}; savedList().forEach(x => (x.parked || []).forEach(b => { kept[b.key] = b; }));      // also after the page was reopened
-  keys.forEach(k => { const b = parked[k] || kept[k]; if (b && !records.some(r => r.key === k)) records.push(Object.assign({}, b, { lrNo: '' })); });
-  pCache = null;
+  keys.forEach(k => { const b = srvSaved[k] || parked[k]; delete srvSaved[k];
+    if (b && !records.some(r => r.key === k)) records.push(Object.assign({}, b, { lrNo: '', lrBy: '', lrAt: '' })); });
+  pCache = null; drawSavedCount();
 }
 let undoTimer = null, lastSaved = null;
 function showUndo(item) {
@@ -331,27 +385,31 @@ function showUndo(item) {
   $('undoBar').classList.add('show');
   clearTimeout(undoTimer); undoTimer = setTimeout(() => $('undoBar').classList.remove('show'), 9000);
 }
-function undoLast() { $('undoBar').classList.remove('show'); if (lastSaved) undoSaved(lastSaved.id, true); }
-let armedUndo = '';
-function undoSaved(id, now) {
-  const v = savedList(), item = v.find(x => x.id === id);
-  if (!item || item.undone) return;
-  if (!now && armedUndo !== id) { armedUndo = id; drawSaved(); return; }      // in the list: press twice
-  armedUndo = '';
-  item.parked.forEach(b => { parked[b.key] = b; });
-  enqueue({ action: 'lr', keys: item.keys.join(','), lr: '', by: store.get('name') }, 'Undo LR ' + item.lr);
-  item.undone = true; putSaved(v);
+function undoLast() { $('undoBar').classList.remove('show'); if (lastSaved) { takeBack(lastSaved.keys.filter(k => srvSaved[k]), lastSaved.lr, lastSaved.bills); lastSaved = null; } }
+function takeBack(keys, lr, bills) {
+  if (!keys.length) return;
+  keys.forEach(k => { if (srvSaved[k]) parked[k] = srvSaved[k]; });
+  enqueue({ action: 'lr', keys: keys.join(','), lr: '', undo: '1', by: store.get('name') }, 'Undo LR ' + lr);
   render(); drawSaved();
-  toast('↶ LR ' + item.lr + ' taken back · ' + item.bills.join(', ') + ' back in the list', 'ok');
+  toast('↶ LR ' + lr + ' taken back · ' + bills.join(', ') + ' back in the list', 'ok');
 }
-function openSaved() { drawSaved(); $('sheetBg').classList.add('show'); $('savedSheet').classList.add('show'); }
+let armedUndo = '';
+function undoSaved(i, now) {
+  const x = typeof i === 'number' ? savedNow[i] : savedGroups().find(y => y.id === i);
+  if (!x) return;
+  if (!now && armedUndo !== x.id) { armedUndo = x.id; drawSaved(); return; }      // in the list: press twice
+  armedUndo = '';
+  takeBack(x.keys, x.lr, x.bills);
+}
+function openSaved() { $('savedFind').value = ''; drawSaved(); $('sheetBg').classList.add('show'); $('savedSheet').classList.add('show'); }
 function closeSaved() { $('sheetBg').classList.remove('show'); $('savedSheet').classList.remove('show'); armedUndo = ''; }
 function drawSaved() {
-  const v = savedList().slice().reverse();
-  $('savedBody').innerHTML = v.length ? v.map(x => `<div class="sv${x.undone ? ' undone' : ''}"><div><b>${esc(x.party)}</b>
-      <span><code>${esc(x.lr)}</code> · ${esc(x.bills.join(', '))} · ${esc(x.time)}</span></div>
-      ${x.undone ? '<span>taken back</span>' : `<button class="${armedUndo === x.id ? 'armed' : ''}" onclick="undoSaved('${esc(x.id)}')">${armedUndo === x.id ? 'Press again' : '↶ Undo'}</button>`}</div>`).join('')
-    : '<div class="sub" style="padding:14px 0">Nothing saved on this phone today.</div>';
+  const all = savedGroups(), q = ($('savedFind').value || '').trim().toLowerCase();
+  savedNow = q ? all.filter(x => [x.party, x.lr, x.by].concat(x.bills).join(' ').toLowerCase().includes(q)) : all;
+  $('savedBody').innerHTML = savedNow.length ? savedNow.map((x, i) => `<div class="sv"><div><b>${esc(x.party)}</b>
+      <span><code>${esc(x.lr)}</code> · ${esc(x.bills.join(', '))}${x.cases ? ' · ' + x.cases + ' cases' : ''}<br>${esc(x.time)}${x.by ? ' · by ' + esc(x.by) : ''}</span></div>
+      <button class="${armedUndo === x.id ? 'armed' : ''}" onclick="undoSaved(${i})">${armedUndo === x.id ? 'Press again' : '↶ Undo'}</button></div>`).join('')
+    : `<div class="sub" style="padding:14px 0">${all.length ? 'No match.' : 'No LR saved today yet.'}</div>`;
 }
 
 function saveLr(key) {
@@ -365,13 +423,16 @@ function saveLr(key) {
   if (!lr) { input.classList.add('required-err'); toast('Type the LR number', 'err'); return; }
   if (!transport) { toast('Choose the transport', 'err'); return; }
   if (!t.date) { document.getElementById('dt-' + key).classList.add('required-err'); toast('Choose the dispatch date', 'err'); return; }
+  // the same LR already saved today on a different party: warn once, save on the second press
+  const clash = Object.values(srvSaved).filter(r => upLr(r.lrNo) === lr && norm(r.party) !== norm(g.main.party));
+  if (clash.length && !(dup[key] && dup[key].lr === lr)) {
+    dup[key] = { lr, party: clash[0].party, bills: clash.filter(r => norm(r.party) === norm(clash[0].party)).map(r => r.billNo).sort(billOrder).join(', ') };
+    render(); toast('Same LR is on another party - check', 'err'); return;
+  }
   const bills = bills0.map(b => '#' + b.billNo).join(', ');
-  delete typed[key]; delete showMore[key];
-  enqueue({ action: 'lr', keys: bills0.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') }, 'LR for ' + bills);
-  const item = { id: Date.now().toString(36), day: todayIso(), time: new Date().toTimeString().substring(0, 5), lr, party: g.main.party,
-                 bills: bills0.map(b => b.billNo), keys: bills0.map(b => b.key), parked: bills0.map(b => Object.assign({}, b)) };
-  const v = savedList(); v.push(item); putSaved(v);
-  showUndo(item);
+  delete typed[key]; delete showMore[key]; delete dup[key];
+  enqueue({ action: 'lr', keys: bills0.map(b => b.key).join(','), lr, transport, date: t.date, by: store.get('name') }, 'LR for ' + bills, { at: nowLocal() });
+  showUndo({ lr, party: g.main.party, bills: bills0.map(b => b.billNo), keys: bills0.map(b => b.key) });
   g.bills.forEach(b => { delete off[b.key]; });      // an unticked bill comes back as its own LR, fully ticked
   render();
   // next slip: clear the cases and search, keep the transporter chosen
