@@ -84,9 +84,7 @@
 .day-head i{flex:1;height:1px;background:var(--border-strong);font-style:normal;align-self:center}
 .tr-head{margin:10px 2px 6px;font-size:11.5px;font-weight:800;letter-spacing:.08em;color:var(--t3)}
 .pc{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-bottom:10px;padding:14px 14px 14px 18px;box-shadow:var(--s1);overflow:hidden}
-.pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--green)}
-.pc.mid::before{background:#e0a03a}
-.pc.old::before{background:var(--red)}
+.pc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--border-strong)}
 .pc-top{display:flex;gap:12px;align-items:flex-start}
 .pc-name{flex:1;min-width:0;font-size:17.5px;font-weight:800;line-height:1.25;color:var(--text);word-break:break-word}
 .pc-cases{flex:0 0 auto;min-width:56px;text-align:center;border-radius:12px;background:var(--charcoal);color:var(--cream);padding:5px 10px 6px}
@@ -95,9 +93,6 @@
 .pc-line{margin-top:6px;font-size:13.5px;font-weight:600;color:var(--t2);line-height:1.4}
 .pc-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .tag{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;color:var(--t2);background:var(--surface3);border-radius:8px;padding:4px 8px}
-.tag.age{background:#e7f4ec;color:var(--green-dk)}
-.pc.mid .tag.age{background:#fdf0dc;color:var(--amber)}
-.pc.old .tag.age{background:#fde2e2;color:var(--red)}
 .tag.co{background:var(--terra-lt);color:var(--terra-1)}
 .tag.co.mrs{background:var(--small-bg);color:var(--small)}
 .pc-bills{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -252,7 +247,7 @@ const shortDay = (iso) => { const d = new Date(iso + 'T00:00:00'); return isNaN(
 // three dropdowns, each can pick several: Transport, Dispatch date, Bill date (nothing ticked = all)
 const FIL = {
   tr: { sel: trSel, vals: g => [g.tr], show: v => v, opt: v => esc(v), all: 'All transport', sort: (a, b) => a.localeCompare(b) },
-  dd: { sel: new Set(), vals: g => [g.day], show: shortDay, opt: v => { const a = daysAgo(v); return esc(dayLabel(v)) + ` <em>${a <= 0 ? 'today' : a + ' day' + (a === 1 ? '' : 's') + ' ago'}</em>`; }, all: 'All dispatch dates', sort: (a, b) => b.localeCompare(a) },
+  dd: { sel: new Set(), vals: g => [g.day], show: shortDay, opt: v => esc(dayLabel(v)), all: 'All dispatch dates', sort: (a, b) => b.localeCompare(a) },
   bd: { sel: new Set(), vals: g => g.bdays, show: shortDay, opt: v => esc(dayLabel(v)), all: 'All bill dates', sort: (a, b) => b.localeCompare(a) },
 };
 const passes = (g, skip) => Object.keys(FIL).every(n => n === skip || !FIL[n].sel.size || FIL[n].vals(g).some(v => FIL[n].sel.has(v)));
@@ -321,16 +316,15 @@ function card(g) {
   if (m.dispatchTransport && !list.includes(m.dispatchTransport)) list.unshift(m.dispatchTransport);
   const changed = m.dispatchTransport && t.transport !== m.dispatchTransport;
   const multi = g.bills.length > 1;
-  const cls = age >= 7 ? 'old' : age >= 4 ? 'mid' : '';
   return `
-<div class="card pc ${cls}" data-id="${k}">
+<div class="card pc" data-id="${k}">
   <div class="pc-top">
     <div class="pc-name party-name" style="margin:0;font-size:17.5px">${esc(m.party)}</div>
     <div class="pc-cases p-cases"><b>${casesOf(g)}</b><small>cases</small></div>
   </div>
   <div class="pc-line">${m.city ? '📍 ' + esc(m.city) + ' &nbsp;·&nbsp; ' : ''}🚛 ${esc(m.dispatchTransport || '—')}</div>
   <div class="pc-meta">
-    <span class="tag age">🚚 Sent ${esc(dayLabel(g.day))}${age >= 1 ? ' · ' + age + ' day' + (age === 1 ? '' : 's') : ''}</span>
+    <span class="tag age">🚚 Sent ${esc(dayLabel(g.day))}</span>
     ${g.bdays.length ? `<span class="tag bdate">🧾 Bill ${esc(g.bdays.slice().sort().map(shortDay).join(', '))}</span>` : ''}
     ${m.company && m.company !== 'SNT' ? `<span class="tag co mrs">${esc(m.company)}</span>` : ''}
   </div>
